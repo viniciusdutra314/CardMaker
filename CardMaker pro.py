@@ -10,7 +10,7 @@ import pytesseract as tess
 from PIL import Image,ImageEnhance
 import PIL
 import xlsxwriter
-
+colorama.init(strip=False)
 
 error=0
 
@@ -39,59 +39,49 @@ if 'PRINTS' in os.listdir():
     pasta_prints = caminho + "\\PRINTS"
     if len(os.listdir(pasta_prints))==0:
         duolingo_pergunta = input("Detecamos uma pasta chamada prints, deseja extrair texto dos prints? ")
-if duolingo_pergunta.lower()[0:1]=="s":
-    colorama.init(strip=False)
-    usuario = os.getlogin()
-    tess.pytesseract.tesseract_cmd = r'C:\Users\dutra\AppData\Local\Tesseract-OCR\tesseract.exe'.replace("dutra",usuario)
-    # Comeco da criação da tabela
-    file = xlsxwriter.Workbook("duolingo.xlsx")
-    table = file.add_worksheet()
-    table.write("A1", "Frente")
-    table.write("B1", "Verso")
-    prints=os.listdir(pasta_prints) #lista com todos os prints em jpg,png...
-    frases=[]
-    i=0
-    print("Extraindo Texto(0/2)...")
-    for j in prints:
-        print(round(100*i/len(prints)),"%")
-        img=Image.open(pasta_prints+'\\'+ j)
-        text=tess.image_to_string(img,lang='fra',config=r'--oem 3 --psm 6')
-        text=text.replace("@","").replace("\\","").replace(">","").replace(")","").replace("!","I").replace('|',"").replace('.','').replace("$","").replace("(","").replace('«',"" ).replace("1","").replace("5","")
-        text=text.strip()
-        text=text.replace("\n"," ")
-        frases.append(text)
-        img.close()
-        if frases[i] !='':
-            table.write("A" + str(i+2), frases[i])
-        else:
-            del frases[i]
-            i=i-1
-        i=i+1
-    file.close()
+try:
+    if duolingo_pergunta.lower()[0]=="s":
+        tess.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        # Comeco da criação da tabela
+        file = xlsxwriter.Workbook("duolingo.xlsx")
+        table = file.add_worksheet()
+        table.write("A1", "Frente")
+        table.write("B1", "Verso")
+        table.write("C1","nome do print")
+        prints=os.listdir(pasta_prints) #lista com todos os prints em jpg,png...
+        frases=[]
+        i=0
+        print("Extraindo Texto(0/2)...")
+        for j in prints:
+            img=Image.open(pasta_prints+'\\'+ j)
+            text=tess.image_to_string(img,lang='fra',config=r'--oem 3 --psm 6')
+            text=text.replace("@","").replace("\\","").replace(">","").replace(")","").replace("!","I").replace('|',"").replace('.','').replace("$","").replace("(","").replace('«',"" ).replace("1","").replace("5","")
+            text=text.strip()
+            text=text.replace("\n"," ")
+            frases.append(text)
+            img.close()
+            if frases[i] !='':
+                table.write("A" + str(i+2), frases[i])
+                table.write("C"+str(i+2),str(j))
+            else:
+                del frases[i]
+                i=i-1
+            i=i+1
+        file.close()
+except:pass
 time.sleep(1)
 ##Print Converter
-
+try:
+    if duolingo_pergunta.lower()[0]=="s" :
+        os.system("start EXCEL.EXE duolingo.xlsx")
+        tatea=input("Complete o verso dos cards e verifique se as frentes estão corretas, salve, feche e quando determinar pressione qualquer tecla ")
+except:pass
 
 t_o=time.time()
 
-try:
-    nome_arquivo = "duolingo.xlsx"
-    caminho = os.path.join(os.getcwd(), nome_arquivo)
-    arquivo = pd.read_excel(caminho)
-    try:
-        nome_arquivo = "anki.xlsx"
-        caminho = os.path.join(os.getcwd(), nome_arquivo)
-        arquivo = pd.read_excel(caminho)
-    except:
-            nome_arquivo = "Anki.xlsx"
-            caminho = os.path.join(os.getcwd(), nome_arquivo)
-            arquivo = pd.read_excel(caminho)
-
-except:
-    while error==0:
+while error==0:
         try:
-            nome_arquivo=input("Não foi possível encontrar uma tabela chamada Anki, ou duolingo "
-                           "por favor coloque o nome da sua tabela:  ")
+            nome_arquivo=input("Coloque o nome da Tabela Excel ")
             caminho = os.path.join(os.getcwd(), nome_arquivo)
             arquivo = pd.read_excel(caminho+".xlsx")
             error=1

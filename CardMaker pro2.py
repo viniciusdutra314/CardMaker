@@ -10,21 +10,25 @@ import pytesseract as tess
 from random import randint
 from PIL import Image
 import xlsxwriter
-translator = Translator()
-colorama.init(strip=False)
-t_o=time.time()
-idioma_escolhido=input("Choose the language that your cards will be translated (ex:pt,fr,en): ")
+translator = Translator() #start translator
+colorama.init(strip=False) #colors in the terminal
+t_o=time.time() # counting time
+chosen_language=input("Choose the language that your cards will be translated (ex:pt,fr,en): ")
 error=0
-usuario_mensagem="Qual é o nome do seu usuario Anki"
-usuario_mensagem=translator.translate(usuario_mensagem, src="pt", dest=idioma_escolhido)
-usuario=input(f"{usuario_mensagem.text} : ")
-audios_caminho=os.getenv('APPDATA') + "\\" +"Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
-while os.path.exists(audios_caminho)==0:
-    error_usuario = translator.translate("Usuário não encontrado!", src="pt", dest=idioma_escolhido)
-    print(Back.RED + error_usuario.text, end="")
+user_message="What is the name of the Anki User"
+user_message=translator.translate(user_message, src="en", dest=chosen_language)
+usuario=input(f"{user_message.text} : ")
+audio_path=os.getenv('APPDATA') + "\\" +"Anki2" + "\\" + str(usuario) + "\\" + "collection.media" #anki audio path
+times_audio=0
+while os.path.exists(audio_path)==0:
+    times_audio+=1
+    error_user = translator.translate("User not found!", src="en", dest=chosen_language)
+    print(Back.RED + error_user.text, end="")
     print(Style.RESET_ALL)
-    usuario=input(f"{usuario_mensagem.text} : ")
-    audios_caminho = os.getenv('APPDATA') + "\\" + "Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
+    if times_audio>=2:
+        print("Maybe you have installed Anki in an alternative directory, z")
+    usuario=input(f"{user_message.text} : ")
+    audio_path = os.getenv('APPDATA') + "\\" + "Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
 nome_deck_mensagem = translator.translate("Escolha um nome para o [Deck]:  ", src="pt", dest=idioma_escolhido)
 nome_deck = input(nome_deck_mensagem.text)
 letras=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
@@ -272,35 +276,33 @@ my_model = genanki.Model(
             'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
         },
     ])
-
+#Color of the cards
 green='<span style="color: rgb(81, 255, 37);">'
+#replace garbage
+garbage=["»", "xa0","\\","]","[",".",'"',"'"]
+for j in range(len(flista)):
+    for i in garbage:
+        flista[j]=flista.replace(i,"")
 
 for i in range(0, len(flista)):
-    if idiomas_palavras[j]==idioma_escolhido:
+    if idiomas_palavras[j]==idioma_escolhido: #active
         nota = genanki.Note(
             model=my_model,
-            fields=[str(
-                flista[i]).replace("»", "").replace("xa0", "").replace("\\", "").replace("]", "").replace("[",
-                                                                                                          "").replace(
-                ".", ""),str(palavras[i]) + ".", ""],tags=str(idiomas_frase[i]))
+            fields=[flista[i],str(palavras[i]) + ".", ""],tags=[str(idiomas_frase[i]),"cardmaker"])
         deck.add_note(nota)
     else:
         if str(palavras[i]).count(" ")>=3: #Caso em que a palavra é na verdade uma frase
             nota = genanki.Note(
                 model=my_model,
-                fields=[str(
-                            flista[i]).replace("»", "").replace("xa0", "").replace("\\", "").replace("]", "").replace("[",
-                                                                                                                      "").replace(
-                            ".", ""),
-                        "[" + "sound:" + str(nome_deck) + "palavra" + str(i) + ".mp3" + "]" + str(palavras[i]) + ".","" ],tags=str(idiomas_frase[i]))
+                fields=[flista[i],
+                        "[" + "sound:" + str(nome_deck) + "palavra" + str(i) + ".mp3" + "]" + str(palavras[i]) + ".","" ],tags=[str(idiomas_frase[i]),"cardmaker"])
             deck.add_note(nota)
-        else:
+        else: #passive
             nota = genanki.Note(
                 model=my_model,
                 fields=["", "[" + "sound:" + str(nome_deck) + "palavra" + str(i) + ".mp3" + "]" + green + '<u><b><i>' + str(palavras[i])+ '</i></b></u></span>'  " == " + str(
-                            traducao[i]), "[" + "sound:" + str(nome_deck) + "frase" + str(i) + ".mp3" + "]" + green + '<u><b><i>' + str(palavras[i])+ '</i></b></u></span>' + "." + str(
-                    flista[i]).replace("»", "").replace("xa0", "").replace("\\", "").replace("]", "").replace("[", "").replace(
-                    ".", "")],tags=str(idiomas_frase[i]))
+                            traducao[i]), "[" + "sound:" + str(nome_deck) + "frase" + str(i) + ".mp3" + "]" + green + '<u><b><i>' + str(palavras[i])+ '</i></b></u></span>' + "." +
+                    flista[i], ""],tags=[str(idiomas_frase[i]),"cardmaker"])
             deck.add_note(nota)
 genanki.Package(deck).write_to_file(str(nome_deck) +'.apkg')
 
@@ -313,5 +315,5 @@ if deltat>60:
     deltat=str(round(deltat//60)) + " Min " + str(round(deltat%60)) + " s"
 
 else: deltat=round(deltat)
-print(f"Congratulations, {len(palavras)} flashcards! In {deltat},{round(int(len(palavras))/(float(deltat)/60),1)} flashcards per minute")
+print(f"Congratulations, {len(palavras)} flashcards! In {deltat} sec,  {round(int(len(palavras))/(float(deltat)/60),1)} flashcards per minute")
 time.sleep(120)

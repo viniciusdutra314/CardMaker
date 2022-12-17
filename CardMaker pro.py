@@ -147,11 +147,6 @@ for j in range(len(frases)):
             fezmerda=input(fezmerda_mensagem.text)
             palavras.iloc[j][0]=fezmerda
 
-## Consertar tabela Kindle
-if int(str(arquivo.iloc[0:5]).count("Location:")) !=0:
-    for u in range(0, frases.shape[0] // 2):
-        frases = frases.drop(2 * u + 1)
-    frases.reset_index(drop=True, inplace=True)
 
 traducao = []
 idiomas_frase = []

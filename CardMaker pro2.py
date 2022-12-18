@@ -33,8 +33,8 @@ while os.path.exists(audio_path)==0:
     if times_audio>=2: # the second it assumes that the error is in the directory
         print("Maybe you have installed Anki in an alternative directory")
         audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media)  ")
-name_deck_mensagem = translator.translate("Deck's name:  ", src="en", dest=chosen_language)
-deck_name = input(name_deck_mensagem.text)
+name_deck_message = translator.translate("Deck's name:  ", src="en", dest=chosen_language)
+deck_name = input(name_deck_message.text)
 letters=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] # creating two random letters in the final of the decks name in order to not have two
 deck_name+=letters[randint(0,25)] + letters[randint(0,25)]
 path = os.getcwd() #your current directory
@@ -108,15 +108,16 @@ while table_error==0:
                 "Name of the excel table: ",
                 src="en", dest=chosen_language)
             archive_name=input(archive_name.text)
-            path = os.path.join(os.getcwd(), archive_name)
-            archive = pd.read_excel(path+".xlsx")
+            path = os.path.join(os.getcwd(), archive_name+".xlsx")
+            archive = pd.read_excel(path)
             table_error=1
         except:
+            pass
             wrong_name=translator.translate("Wrong name!",src="en",dest=chosen_language)
             print(Back.RED + wrong_name.text, end="")
             print(Style.RESET_ALL)
-check_message=translator.translate("Do you want to check the cards before they been save? (Yes = y No= n):  ",src="en",dest=chosen_language)
-check=input(check_message.text)
+check_message=translator.translate("Do you want to check the cards before they been save? (Yes = y No= n)",src="en",dest=chosen_language)
+check=input(check_message.text+": ")
 archive = archive.dropna()
 archive.reset_index(drop=True, inplace=True)
 try: #idenfity the type of the table (standard=phrase and word,active=just one phrase and remembering how to say it in other language)
@@ -234,17 +235,37 @@ if check.lower()=="y":
         stringtoprint=""
         interval=1
         for k in range(len(translation)):
-            if k==position-interval:
-                stringtoprint+=Back.BLUE + translation[k] +" "
-            if k==position+interval:
-                stringtoprint+=translation[k]+Style.RESET_ALL +" "
-            if k not in [position-interval,position+interval]:
-                stringtoprint+=translation[k]+" "
+            try:
+                beta=position
+                if k==position-interval:
+                    stringtoprint+=Back.BLUE + translation[k] +" "
+                if k==position+interval:
+                    stringtoprint+=translation[k]+Style.RESET_ALL +" "
+                if k not in [position-interval,position+interval]:
+                    if k == len(translation)-1:
+                        stringtoprint += translation[k] + Style.RESET_ALL
+                    else:
+                        stringtoprint += translation[k] + " "
+            except: stringtoprint+=translation[k]+" "
         print(stringtoprint)
         print("---" + translator.translate("Translated word", src="en", dest=chosen_language).text + "---")
         print(Back.RED + words.iloc[j][0],"=",translation_words[j],end="")
         print(Style.RESET_ALL)
         newtranslation=input(("---"+translator.translate("New translation",src="en",dest=chosen_language).text)+": ")
+        if newtranslation=="s":
+            savefile = xlsxwriter.Workbook(deck_name+"stopped"+".xlsx")
+            stoppedtable = savefile.add_worksheet()
+            stoppedtable.write("A1", "Front")
+            stoppedtable.write("B1", "Back")
+            stop = j
+            for k in range((len(phrases)-j)):
+                try:
+                    stoppedtable.write("A"+str(j+k),phrases.iloc[j+k][0])
+                    stoppedtable.write("B"+str(j+k),words.iloc[j+k][0])
+                except:pass
+            j=len(phrases)+2
+            savefile.close()
+            break
         if newtranslation.lower().count("!l")!=0:
             languages[j]=input(translator.translate("New language",src="en",dest=chosen_language).text+": ")
             newtranslation=newtranslation.replace("!l","")
@@ -263,9 +284,13 @@ if check.lower()=="y":
             j=j-2
             try:newtranslation=translation_phrases[j+2]
             except:newtranslation=translation_phrases[j]
+try:
+    gamma=stop
+except:
+    stop=len(phrases)
 print("Audios...(2/2)")
-for j in range(0, len(phrases)):
-    print(str(round(100*(j/len(phrases)))) + "%")
+for j in range(0, stop):
+    print(str(round(100*(j/stop))) + "%")
     try:
         tts = gTTS(str(words.iloc[j][0]), lang=languages[j])
         tts.save(audio_path + "\\" +str(deck_name) + "word" + str(j) + '.mp3')
@@ -317,7 +342,7 @@ else: #you can add a new color, just put it here in the dictionary
                   'yellow':'<span style="color: rgb(249, 255, 54);">', 'purple':'<span style="color: rgb(198, 38, 255);">', 'pink':'<span style="color: rgb(255, 14, 192);">', }
     color=colors_rgb[color]
 
-for i in range(0, len(phrases)):
+for i in range(0, stop):
     if cardtype=="active":
         pass
     if cardtype=="passive":

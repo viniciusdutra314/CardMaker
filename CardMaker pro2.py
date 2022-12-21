@@ -10,11 +10,13 @@ from random import randint #random 2 letters in the id_deck
 from PIL import Image #open the duolingo prints
 import xlsxwriter #excel tables
 from selenium import webdriver # open color custom website
-
-
+from threading import Thread #acelerate the code
+from multiprocessing import cpu_count #know the exact number of cores
 translator = Translator() #start translator
 init(strip=False) #colors in the terminal
 t_o=time.time() # counting time
+threads=round(cpu_count()/2) #using half of the threads to acelerate the code...you can change this if you want
+
 chosen_language=input("Choose the language that your cards will be translated (ex:pt,fr,en): ")
 user_message="What is the name of your Anki User "
 user_message=translator.translate(user_message, src="en", dest=chosen_language)
@@ -180,20 +182,31 @@ except:
     alpha=0
 translation_phrases = []
 translation_words=[]
-def translatepassive(j):
+temp1=[]
+temp2=[]
+numbers=[]
+print(translator.translate("Translating...(1/2)",src="en",dest=chosen_language).text)
+def translatepassive(k,threads):
     global phrases,words,chosen_language,alpha,translation_words,translation_phrases,languages
-    if alpha==0:
-            languages.append((translator.detect(phrases.iloc[j][0]).lang))
-    translation_phrases.append((translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text)
-    translation_words.append((translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text)
-    if alpha==2:
-        print("Error in the translation")
-        print(phrases.iloc[j][0])
-        print(words.iloc[j][0])
-        languages.append(input("Language: "))
-        translation_phrases.append(
-        translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
-        translation_words.append(translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
+    for j in range(k,len(phrases),threads):
+        try:
+            if alpha==0:
+                    languages.append((translator.detect(phrases.iloc[j][0]).lang))
+            t1=str(j)+" "+(translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text
+            t2=str(j)+" "+ (translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text
+            translation_phrases.append(t1)
+            translation_words.append(t2)
+            temp1.append(str(j)+" "+phrases.iloc[j][0])
+            temp2.append(str(j)+" "+words.iloc[j][0])
+            numbers.append(str(j))
+        except:
+            print("Error in the translation")
+            print(phrases.iloc[j][0])
+            print(words.iloc[j][0])
+            languages.append(input("Language: "))
+            translation_phrases.append(
+            translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
+            translation_words.append(translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
 def translateactive(j):
     global phrases, chosen_language, alpha, translation_words, translation_phrases, languages
     try:
@@ -205,14 +218,26 @@ def translateactive(j):
         print(phrases.iloc[j][0])
         languages.append(input("Language: "))
         translation_phrases.append(translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
-
-if cardtype=="passive":
-    for j in range(len(phrases)): translatepassive(j)
-if cardtype=="active":
-    for j in range(len(phrases)): translateactive(j)
-
-
-print("100%")
+processes=[]
+for n in range(threads):
+    if cardtype=="passive":
+        p=Thread(target=translatepassive,args=[n,threads])
+    if cardtype=="active":
+        p=Thread(target=translateactive,args=[n,threads])
+    p.start()
+    processes.append(p)
+for process in processes:
+    process.join()
+translation_words=sorted(translation_words)
+translation_phrases=sorted(translation_phrases)
+phrases=sorted(temp1)
+words=sorted(temp2)
+numbers=sorted(numbers)
+for j in range(len(translation_words)):
+    translation_words[j]=(translation_words[j]).replace(numbers[j]," ")
+    translation_phrases[j]=(translation_phrases[j]).replace(numbers[j]," ")
+    phrases[j]=phrases[j].replace(numbers[j]," ")
+    words[j]=words[j].replace(numbers[j]," ")
 j=0
 if check.lower()=="y" and cardtype=="passive":
     checkphrases_message=translator.translate("Para mudar uma tradução escreva a nova tradução caso contrario deixe vazio"+"\n"+
@@ -223,16 +248,16 @@ if check.lower()=="y" and cardtype=="passive":
     while j<len(phrases):
         print("----", j,"/",len(phrases),"-----")
         print(translator.translate("Language of the card",src="en",dest=chosen_language).text,Fore.LIGHTYELLOW_EX+ languages[j],Style.RESET_ALL)
-        phrasehl=phrases.iloc[j][0].split()
+        phrasehl=phrases[j].split()
         stringtoprint=""
         for k in range(len(phrasehl)):
-            if phrasehl[k]==words.iloc[j][0]:
+            if phrasehl[k]==words[j]:
                 position=k
                 stringtoprint+=Back.GREEN+phrasehl[k]+Style.RESET_ALL+ " "
             else: stringtoprint+=phrasehl[k] +" "
         print(stringtoprint)
         print("---"+translator.translate("Translation",src="en",dest=chosen_language).text+"---")
-        translation=(translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text
+        translation=(translator.translate(phrases[j], src=str(languages[j]), dest=chosen_language)).text
         translation=translation.split()
         stringtoprint=""
         interval=1
@@ -251,7 +276,7 @@ if check.lower()=="y" and cardtype=="passive":
             except: stringtoprint+=translation[k]+" "
         print(stringtoprint)
         print("---" + translator.translate("Translated word", src="en", dest=chosen_language).text + "---")
-        print(Back.RED + words.iloc[j][0],"=",translation_words[j],end="")
+        print(Back.RED + words[j],"=",translation_words[j],end="")
         print(Style.RESET_ALL)
         newtranslation=input(("---"+translator.translate("New translation",src="en",dest=chosen_language).text)+": ")
         if newtranslation=="s":
@@ -262,8 +287,8 @@ if check.lower()=="y" and cardtype=="passive":
             stop = j
             for k in range((len(phrases)-j)):
                 try:
-                    stoppedtable.write("A"+str(j+k),phrases.iloc[j+k][0])
-                    stoppedtable.write("B"+str(j+k),words.iloc[j+k][0])
+                    stoppedtable.write("A"+str(j+k),phrases[j+k])
+                    stoppedtable.write("B"+str(j+k),words[j+k])
                 except:pass
             j=len(phrases)+2
             savefile.close()
@@ -275,12 +300,7 @@ if check.lower()=="y" and cardtype=="passive":
             if newtranslation.lower()!='b':
                 translation_words[j]=newtranslation
         if newtranslation.lower()=="d":
-            phrases = phrases.drop(j)
-            phrases.reset_index(drop=True, inplace=True)
-            words=words.drop(j)
-            words.reset_index(drop=True, inplace=True)
-            del translation_words[j]
-            del translation_phrases[j]
+            del phrases[j], words[j],translation_words[j],translation_phrases[j]
         if newtranslation!="d": j+=1
         if newtranslation=="b":
             j=j-2
@@ -297,7 +317,7 @@ if check.lower()=="y" and cardtype=="active":
     checktable.write("A1", "Active")
     checktable.write("B1", "Translation")
     for j in range(stop):
-        checktable.write("A"+str(j+2),phrases.iloc[j][0])
+        checktable.write("A"+str(j+2),phrases[j])
         checktable.write("B"+str(j+2),translation_phrases[j])
     checkfile.close()
     input(translator.translate(f"Open the excel table and check if there's any mistake, press any key to continue",src="en",dest=chosen_language).text)
@@ -307,28 +327,37 @@ if check.lower()=="y" and cardtype=="active":
     excelcheck.reset_index(drop=True, inplace=True)
     phrases = excelcheck[["Active"]]
     translation_phrases = excelcheck[["Translation"]]
-    templist=[]
+    templist1=[]
+    templist2=[]
     for k in range(len(translation_phrases)):
-        templist.append(translation_phrases.iloc[k][0])
-    translation_phrases=templist
+        templist1.append(translation_phrases.iloc[k][0])
+        templist2.append(phrases.iloc[k][0])
+    translation_phrases=templist1
+    phrases=templist2
     stop=len(phrases)
-print("Audios...(2/2)")
-for j in range(0, stop):
-    print(str(round(100*(j/stop))) + "%")
-    if cardtype=="passive":
-        try:
-            tts = gTTS(str(words.iloc[j][0]), lang=languages[j])
-            tts.save(audio_path + "\\" +str(deck_name) + "word" + str(j) + '.mp3')
-            tts = gTTS(str(words.iloc[j][0])+"."+str(phrases.iloc[j][0]), lang=languages[j])
-            tts.save(audio_path + "\\" + str(deck_name) + "phrase" + str(j) + '.mp3')
-        except:pass
-    if cardtype=="active":
-        try:
-            tts = gTTS(str(phrases.iloc[j][0]), lang=languages[j])
-            tts.save(audio_path + "\\" +str(deck_name) + "phrase" + str(j) + '.mp3')
-        except:pass
-print("100%")
-
+print(translator.translate("Audios...(2/2)",src="en",dest=chosen_language).text)
+def audiogenerator(k,threads):
+    global words,phrases,languages,audio_path,deck_name,stop
+    for j in range(k, stop,threads):
+        if cardtype=="passive":
+            try:
+                tts = gTTS(str(words[j]), lang=languages[j])
+                tts.save(audio_path + "\\" +str(deck_name) + "word" + str(j) + '.mp3')
+                tts = gTTS(str(words[j])+"."+str(phrases[j]), lang=languages[j])
+                tts.save(audio_path + "\\" + str(deck_name) + "phrase" + str(j) + '.mp3')
+            except:pass
+        if cardtype=="active":
+            try:
+                tts = gTTS(str(phrases[j]), lang=languages[j])
+                tts.save(audio_path + "\\" +str(deck_name) + "phrase" + str(j) + '.mp3')
+            except:pass
+processes=[]
+for n in range(threads):
+    p=Thread(target=audiogenerator,args=[n,threads])
+    p.start()
+    processes.append(p)
+for process in processes:
+    process.join()
 id_deck =1_335_132_555
 
 deck = genanki.Deck(
@@ -376,13 +405,13 @@ for i in range(0, stop):
     if cardtype=="active":
         note = genanki.Note(model=my_model,
                             fields=[color + '<u><b><i>' +" ["+ languages[i]+"] "+'</i></b></u></span>' +
-                                    translation_phrases[i],"[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + str(" " + phrases.iloc[i][0]).replace("'", "")
+                                    translation_phrases[i],"[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + str(" " + phrases[i])
                                 ,"" ],tags=[str(languages[i]), "cardmaker"])
     if cardtype=="passive":
         note = genanki.Note(model=my_model,
-                fields=["","[" + "sound:" + str(deck_name) + "word" + str(i) + ".mp3" + "]" + color + '<u><b><i>' + str(" "+ words.iloc[i][0]).replace("'","")+ '</i></b></u></span>'  " == " + str(
-                            translation_words[i]), "[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + color + '<u><b><i>' + str(words.iloc[i][0]).replace("'","")+ '</i></b></u></span>' + ". " +
-                    phrases.iloc[i][0]],tags=[str(languages[i]),"cardmaker"])
+                fields=["","[" + "sound:" + str(deck_name) + "word" + str(i) + ".mp3" + "]" + color + '<u><b><i>' + str(" "+ words[i]) + '</i></b></u></span>'  " == " + str(
+                            translation_words[i]), "[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + color + '<u><b><i>' +words[i]+ '</i></b></u></span>' + ". " +
+                    phrases[i]],tags=[str(languages[i]),"cardmaker"])
     deck.add_note(note)
 genanki.Package(deck).write_to_file(str(deck_name) +'.apkg')
 

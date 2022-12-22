@@ -1,17 +1,18 @@
-import pandas as pd #handle the excel tables
+#modules in alphabetic order
+from colorama import Fore,Back,Style,init #use colors
+import genanki #integration with anki
 from googletrans import Translator #translate the phrases
 from gtts import gTTS #generate audios
-import genanki #integration with anki
 import os #get the file directories
-import time #count the amount of time used in creating cards
-from colorama import Fore,Back,Style,init #use colors
-import pytesseract as tess #text extraction from images (ex: duolingo)
-from random import randint #random 2 letters in the id_deck
-from PIL import Image #open the duolingo prints
-import xlsxwriter #excel tables
-from selenium import webdriver # open color custom website
-from threading import Thread #acelerate the code
 from multiprocessing import cpu_count #know the exact number of cores
+import pandas as pd #handle the excel tables
+from PIL import Image #open the duolingo prints
+import pytesseract as tess #text extraction from images (ex: duolingo)
+from selenium import webdriver # open color custom website
+import time #count the amount of time used in creating cards
+from threading import Thread #acelerate the code
+import xlsxwriter #excel tables
+
 translator = Translator() #start translator
 init(strip=False) #colors in the terminal
 t_o=time.time() # counting time
@@ -114,8 +115,12 @@ while table_error==0:
             print(Back.RED + wrong_name.text, end="")
             print(Style.RESET_ALL)
 deck_name = archive_name
-letters=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] # creating two random letters in the final of the decks name in order to not have two
-deck_name+=letters[randint(0,25)] + letters[randint(0,25)]
+u=""
+counter=0
+while os.path.exists(os.getcwd()+"\\"+deck_name+u+".apkg")==True:
+    counter+=1
+    u=str(counter)
+deck_name+=str(u)
 check_message=translator.translate("Do you want to check the cards before they been save? (Yes = y No= n)",src="en",dest=chosen_language)
 check=input(check_message.text+": ")
 archive = archive.dropna()
@@ -186,59 +191,39 @@ temp1=[]
 temp2=[]
 numbers=[]
 print(translator.translate("Translating...(1/2)",src="en",dest=chosen_language).text)
-def translatepassive(k,threads):
+def translate(k,threads):
     global phrases,words,chosen_language,alpha,translation_words,translation_phrases,languages
     for j in range(k,len(phrases),threads):
-        try:
             if alpha==0:
                     languages.append((translator.detect(phrases.iloc[j][0]).lang))
             t1=str(j)+" "+(translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text
-            t2=str(j)+" "+ (translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text
             translation_phrases.append(t1)
-            translation_words.append(t2)
             temp1.append(str(j)+" "+phrases.iloc[j][0])
-            temp2.append(str(j)+" "+words.iloc[j][0])
             numbers.append(str(j))
-        except:
-            print("Error in the translation")
-            print(phrases.iloc[j][0])
-            print(words.iloc[j][0])
-            languages.append(input("Language: "))
-            translation_phrases.append(
-            translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
-            translation_words.append(translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
-def translateactive(j):
-    global phrases, chosen_language, alpha, translation_words, translation_phrases, languages
-    try:
-        if alpha==0:
-            languages.append((translator.detect(phrases.iloc[j][0]).lang))
-        translation_phrases.append(translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
-    except:
-        print("Error in the translation")
-        print(phrases.iloc[j][0])
-        languages.append(input("Language: "))
-        translation_phrases.append(translator.translate(phrases.iloc[j][0], src=str(languages[j]), dest=chosen_language).text)
+            if cardtype=="passive":
+                t2=str(j)+" "+ (translator.translate(words.iloc[j][0], src=str(languages[j]), dest=chosen_language)).text
+                translation_words.append(t2)
+                temp2.append(str(j)+" "+words.iloc[j][0])
 processes=[]
 for n in range(threads):
-    if cardtype=="passive":
-        p=Thread(target=translatepassive,args=[n,threads])
-    if cardtype=="active":
-        p=Thread(target=translateactive,args=[n,threads])
+    p=Thread(target=translate,args=[n,threads])
     p.start()
     processes.append(p)
 for process in processes:
     process.join()
-translation_words=sorted(translation_words)
 translation_phrases=sorted(translation_phrases)
 phrases=sorted(temp1)
-words=sorted(temp2)
 numbers=sorted(numbers)
-for j in range(len(translation_words)):
-    translation_words[j]=(translation_words[j]).replace(numbers[j]," ")
-    translation_phrases[j]=(translation_phrases[j]).replace(numbers[j]," ")
-    phrases[j]=phrases[j].replace(numbers[j]," ")
-    words[j]=words[j].replace(numbers[j]," ")
-j=0
+if cardtype=="passive":
+    translation_words=sorted(translation_words)
+    words=sorted(temp2)
+for j in range(len(phrases)):
+    translation_phrases[j]=((translation_phrases[j]).replace(numbers[j],""))[1::]
+    phrases[j]=(phrases[j].replace(numbers[j],""))[1::]
+    if cardtype=="passive":
+        translation_words[j]=((translation_words[j]).replace(numbers[j],""))[1::]
+        words[j]=(words[j].replace(numbers[j],""))[1::]
+
 if check.lower()=="y" and cardtype=="passive":
     checkphrases_message=translator.translate("Para mudar uma tradução escreva a nova tradução caso contrario deixe vazio"+"\n"+
                                               "É possível deletar um card, deletar=d"+ "\n"
@@ -251,7 +236,7 @@ if check.lower()=="y" and cardtype=="passive":
         phrasehl=phrases[j].split()
         stringtoprint=""
         for k in range(len(phrasehl)):
-            if phrasehl[k]==words[j]:
+            if phrasehl[k]==words[j].replace(" ",""):
                 position=k
                 stringtoprint+=Back.GREEN+phrasehl[k]+Style.RESET_ALL+ " "
             else: stringtoprint+=phrasehl[k] +" "
@@ -263,7 +248,6 @@ if check.lower()=="y" and cardtype=="passive":
         interval=1
         for k in range(len(translation)):
             try:
-                beta=position
                 if k==position-interval:
                     stringtoprint+=Back.BLUE + translation[k] +" "
                 if k==position+interval:
@@ -273,7 +257,8 @@ if check.lower()=="y" and cardtype=="passive":
                         stringtoprint += translation[k] + Style.RESET_ALL
                     else:
                         stringtoprint += translation[k] + " "
-            except: stringtoprint+=translation[k]+" "
+            except:
+                stringtoprint+=translation[k]+" "
         print(stringtoprint)
         print("---" + translator.translate("Translated word", src="en", dest=chosen_language).text + "---")
         print(Back.RED + words[j],"=",translation_words[j],end="")
@@ -339,18 +324,17 @@ print(translator.translate("Audios...(2/2)",src="en",dest=chosen_language).text)
 def audiogenerator(k,threads):
     global words,phrases,languages,audio_path,deck_name,stop
     for j in range(k, stop,threads):
-        if cardtype=="passive":
-            try:
-                tts = gTTS(str(words[j]), lang=languages[j])
-                tts.save(audio_path + "\\" +str(deck_name) + "word" + str(j) + '.mp3')
+        try:
+            if cardtype == "passive":
                 tts = gTTS(str(words[j])+"."+str(phrases[j]), lang=languages[j])
                 tts.save(audio_path + "\\" + str(deck_name) + "phrase" + str(j) + '.mp3')
-            except:pass
-        if cardtype=="active":
-            try:
+                tts = gTTS(str(words[j]), lang=languages[j])
+                tts.save(audio_path + "\\" + str(deck_name) + "word" + str(j) + '.mp3')
+            if cardtype == "active":
                 tts = gTTS(str(phrases[j]), lang=languages[j])
-                tts.save(audio_path + "\\" +str(deck_name) + "phrase" + str(j) + '.mp3')
-            except:pass
+                tts.save(audio_path + "\\" + str(deck_name) + "phrase" + str(j) + '.mp3')
+        except:pass
+
 processes=[]
 for n in range(threads):
     p=Thread(target=audiogenerator,args=[n,threads])
@@ -358,6 +342,7 @@ for n in range(threads):
     processes.append(p)
 for process in processes:
     process.join()
+
 id_deck =1_335_132_555
 
 deck = genanki.Deck(

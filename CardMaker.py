@@ -134,7 +134,7 @@ try: #idenfity the type of the table (standard=phrase and word,active=just one p
         cardtype="vocabulary"
     except:
         try:
-            phrases=archive[["Active"]]
+            phrases=archive[["Speak"]]
             cardtype="speak"
         except:
             phrases=archive[["Writing"]]
@@ -305,20 +305,20 @@ except:
     stop=len(phrases)
 
 if check.lower()=="y" and cardtype in ["speak","writing"]:
-    checkfile = xlsxwriter.Workbook(deck_name + "_checkactive" + ".xlsx")
+    checkfile = xlsxwriter.Workbook(deck_name + "_checkspeak" + ".xlsx")
     checktable = checkfile.add_worksheet()
-    checktable.write("A1", "Activeorwriting")
+    checktable.write("A1", "speakorwriting")
     checktable.write("B1", "Translation")
     for j in range(stop):
         checktable.write("A"+str(j+2),phrases[j])
         checktable.write("B"+str(j+2),translation_phrases[j])
     checkfile.close()
     input(translator.translate(f"Open the excel table and check if there's any mistake, press any key to continue",src="en",dest=chosen_language).text)
-    path = os.path.join(os.getcwd(), deck_name+"_checkactive" + ".xlsx")
+    path = os.path.join(os.getcwd(), deck_name+"_checkspeak" + ".xlsx")
     excelcheck = pd.read_excel(path)
     excelcheck = excelcheck.dropna()
     excelcheck.reset_index(drop=True, inplace=True)
-    phrases = excelcheck[["Activeorwriting"]]
+    phrases = excelcheck[["speakorwriting"]]
     translation_phrases = excelcheck[["Translation"]]
     templist1=[]
     templist2=[]
@@ -350,9 +350,10 @@ for n in range(threads):
     processes.append(p)
 for process in processes:
     process.join()
-
-id_deck =1_335_132_555
-
+if cardtype=="vocabulary" or "active":
+    id_deck =1_335_132_555
+else:
+    id_deck=2_343_103_533
 deck = genanki.Deck(
     id_deck,
     deck_name)

@@ -18,12 +18,12 @@ init(strip=False) #colors in the terminal
 t_o=time.time() # counting time
 threads=round(cpu_count()/2) #using half of the threads to acelerate the code...you can change this if you want
 
-#chosen_language=input("Choose the language that your cards will be translated (ex:pt,fr,en): ")
-chosen_language="pt"
+chosen_language=input("Choose the language that your cards will be translated (ex:pt,fr,en): ")
+#chosen_language="pt"
 user_message="What is the name of your Anki User "
 user_message=translator.translate(user_message, src="en", dest=chosen_language)
-#usuario=input(f"{user_message.text} : ")
-usuario="Dutra"
+usuario=input(f"{user_message.text} : ")
+#usuario="Dutra"
 audio_path=os.getenv('APPDATA') + "\\" +"Anki2" + "\\" + str(usuario) + "\\" + "collection.media" #anki audio path, normally is in the C drive, but you can change if you have installed Anki in other path
 times_audio=0
 while os.path.exists(audio_path)==0:
@@ -127,15 +127,15 @@ check_message=translator.translate("Do you want to check the cards before they b
 check=input(check_message.text+": ")
 archive = archive.dropna()
 archive.reset_index(drop=True, inplace=True)
-try: #idenfity the type of the table (standard=phrase and word,active=just one phrase and remembering how to say it in other language)
+try: #idenfity the type of the table
     try:
         phrases = archive[["Front"]]
         words = archive[["Back"]]
         cardtype="vocabulary"
     except:
         try:
-            phrases=archive[["Speak"]]
-            cardtype="speak"
+            phrases=archive[["Speaking"]]
+            cardtype="speaking"
         except:
             phrases=archive[["Writing"]]
             cardtype="writing"
@@ -152,7 +152,7 @@ j=0
 ## phrase= "I worked a lot today"  word=work. This is different from the build-in function in python
 ## work is in "I worked a lot today", it'll return True, because "work" is in "worked"
 def wordinphrase(word,phrase):
-    word,phrase=str(word),str(phrase)
+    word,phrase=str(word).lower(),str(phrase).lower()
     remove=[".",",","?","!",":",";"]
     for k in remove:
         phrase=phrase.replace(k," ")
@@ -166,7 +166,7 @@ def wordinphrase(word,phrase):
 
 if check=="y" and cardtype=='vocabulary':
     while j<len(phrases):
-        if words.iloc[j][0].lower() not in phrases.iloc[j][0].lower():
+        if words.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","") not in phrases.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":",""):
             word_notinphrase=translator.translate(f"Erro: Word not in the phrase ",src="en",dest=chosen_language)
             print(Back.RED + word_notinphrase.text,end="")
             print(Style.RESET_ALL)
@@ -232,6 +232,7 @@ for j in range(len(phrases)):
             translation_words[j]=((translation_words[j]).replace(numbers[j],""))
             words[j]=(words[j].replace(numbers[j],""))
     except:pass
+j=0
 if check.lower()=="y" and cardtype=="vocabulary":
     checkphrases_message=translator.translate("Para mudar uma tradução escreva a nova tradução caso contrario deixe vazio"+"\n"+
                                               "É possível deletar um card, deletar=d"+ "\n"
@@ -239,7 +240,7 @@ if check.lower()=="y" and cardtype=="vocabulary":
                                               "Se o idioma estiver errado, digite !l no final da tradução nova",src="pt",dest=chosen_language)
     print(checkphrases_message.text)
     while j<len(phrases):
-        print("----", j,"/",len(phrases),"-----")
+        print("----", j+1,"/",len(phrases),"-----")
         print(translator.translate("Language of the card",src="en",dest=chosen_language).text,Fore.LIGHTYELLOW_EX+ languages[j],Style.RESET_ALL)
         phrasehl=phrases[j].split()
         stringtoprint=""
@@ -304,21 +305,21 @@ try:
 except:
     stop=len(phrases)
 
-if check.lower()=="y" and cardtype in ["speak","writing"]:
-    checkfile = xlsxwriter.Workbook(deck_name + "_checkspeak" + ".xlsx")
+if check.lower()=="y" and cardtype in ["speaking","writing"]:
+    checkfile = xlsxwriter.Workbook(deck_name + "_checkspeaking" + ".xlsx")
     checktable = checkfile.add_worksheet()
-    checktable.write("A1", "speakorwriting")
+    checktable.write("A1", "speakingorwriting")
     checktable.write("B1", "Translation")
     for j in range(stop):
         checktable.write("A"+str(j+2),phrases[j])
         checktable.write("B"+str(j+2),translation_phrases[j])
     checkfile.close()
     input(translator.translate(f"Open the excel table and check if there's any mistake, press any key to continue",src="en",dest=chosen_language).text)
-    path = os.path.join(os.getcwd(), deck_name+"_checkspeak" + ".xlsx")
+    path = os.path.join(os.getcwd(), deck_name+"_checkspeaking" + ".xlsx")
     excelcheck = pd.read_excel(path)
     excelcheck = excelcheck.dropna()
     excelcheck.reset_index(drop=True, inplace=True)
-    phrases = excelcheck[["speakorwriting"]]
+    phrases = excelcheck[["speakingorwriting"]]
     translation_phrases = excelcheck[["Translation"]]
     templist1=[]
     templist2=[]
@@ -338,7 +339,7 @@ def audiogenerator(k,threads):
                 tts.save(audio_path + "\\" + str(deck_name) + "phrase" + str(j) + '.mp3')
                 tts = gTTS(str(words[j]), lang=languages[j])
                 tts.save(audio_path + "\\" + str(deck_name) + "word" + str(j) + '.mp3')
-            if cardtype in ["speak","writing"]:
+            if cardtype in ["speaking","writing"]:
                 tts = gTTS(str(phrases[j]), lang=languages[j])
                 tts.save(audio_path + "\\" + str(deck_name) + "phrase" + str(j) + '.mp3')
         except:pass
@@ -350,14 +351,14 @@ for n in range(threads):
     processes.append(p)
 for process in processes:
     process.join()
-if cardtype=="vocabulary" or "active":
+if cardtype=="vocabulary" or "speaking":
     id_deck =1_335_132_555
-else:
+if cardtype=="writing":
     id_deck=2_343_103_533
 deck = genanki.Deck(
     id_deck,
     deck_name)
-if cardtype in ["vocabulary","speak"]:
+if cardtype in ["vocabulary","speaking"]:
     my_model = genanki.Model(
         id_deck,
         'CardMaker Q&A',
@@ -390,11 +391,11 @@ if cardtype=="writing":
             },
         ])
 #Color of the cards
-#print(translator.translate("Colors that are in the code: ",src="en",dest=chosen_language).text)
-#print("blue,green,red,purple,pink,yellow")
-#custom_color_message=translator.translate("You can select the color of the highlighted word, if you want to create a new color press yes=y. If you want a predetermined color write the name of the color",src="en",dest=chosen_language)
-#color=input(custom_color_message.text+": ")
-color_scheme={"es":"red","fr":"blue","en":"green","la":"yellow"} # I use a specific color for each language
+print(translator.translate("Colors that are in the code: ",src="en",dest=chosen_language).text)
+print("blue,green,red,purple,pink,yellow")
+custom_color_message=translator.translate("You can select the color of the highlighted word, if you want to create a new color press yes=y. If you want a predetermined color write the name of the color",src="en",dest=chosen_language)
+colorforall=input(custom_color_message.text+": ")
+#color_scheme={"es":"red","fr":"blue","en":"green","la":"yellow"} # I use a specific color for each language
 colors_rgb = {'green': '<span style="color: rgb(81, 255, 37);">', 'red': '<span style="color: rgb(228, 14, 14);">',
               'blue': '<span style="color: rgb(18, 166, 252);">',
               'yellow': '<span style="color: rgb(249, 255, 54);">',
@@ -402,8 +403,9 @@ colors_rgb = {'green': '<span style="color: rgb(81, 255, 37);">', 'red': '<span 
               'pink': '<span style="color: rgb(255, 14, 192);">', }
 color=[]
 for j in range(stop):
-    color.append(colors_rgb[color_scheme[languages[j]]])
-
+    try:
+        color.append(colors_rgb[color_scheme[languages[j]]])
+    except: color.append(colors_rgb[colorforall])
 if color=="y":
     try:
         driver = webdriver.Chrome()
@@ -421,7 +423,7 @@ if type(color)=="str": #you can add a new color, just put it here in the diction
 
 for i in range(0, stop):
     try:
-        if cardtype=="speak":
+        if cardtype=="speaking":
             note = genanki.Note(model=my_model,
                                 fields=[color[i] + '<u><b><i>' +" ["+ languages[i]+"] "+'</i></b></u></span>' +
                                         translation_phrases[i],"[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + str(" " + phrases[i])
@@ -429,7 +431,7 @@ for i in range(0, stop):
         if cardtype=="vocabulary":
             note = genanki.Note(model=my_model,
                     fields=["","[" + "sound:" + str(deck_name) + "word" + str(i) + ".mp3" + "]" + color[i] + '<u><b><i>' + str(" "+ words[i]) + '</i></b></u></span>'  " == " + str(
-                                translation_words[i]), "[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + color + '<u><b><i>' +words[i]+ '</i></b></u></span>' + ". " +
+                                translation_words[i]), "[" + "sound:" + str(deck_name) + "phrase" + str(i) + ".mp3" + "]" + color[i] + '<u><b><i>' +words[i]+ '</i></b></u></span>' + ". " +
                         phrases[i]],tags=[str(languages[i]),"cardmaker"])
         if cardtype=="writing":
             note = genanki.Note(model=my_model,
@@ -445,4 +447,3 @@ tf=time.time()
 deltat=tf -t_o
 
 print(f"Congratulations, {len(phrases)} flashcards in {round(deltat/60,1)} minutes! {round(60*len(phrases)/deltat,1)} flashcards per minute")
-time.sleep(120)

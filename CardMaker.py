@@ -6,8 +6,6 @@ from gtts import gTTS #generate audios
 import os #get the file directories
 from multiprocessing import cpu_count #know the exact number of cores
 import pandas as pd #handle the excel tables
-from PIL import Image #open the duolingo prints
-import pytesseract as tess #text extraction from images (ex: duolingo)
 from selenium import webdriver # open color custom website
 import time #count the amount of time used in creating cards
 from threading import Thread #acelerate the code
@@ -36,70 +34,16 @@ while os.path.exists(audio_path)==0:
         audio_path = os.getenv('APPDATA') + "\\" + "Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
     if times_audio>=2: # the second it assumes that the error is in the directory
         print("Maybe you have installed Anki in an alternative directory")
-        audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media)  ")
-path = os.getcwd() #your current directory
+        audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media)  ")path = os.getcwd() #your current directory
 
-##Duolingo, it'll check if there's a folder named "print"
-def commonelement(a,b):
-    for i in range(len(a)):
-        for k in range(len(b)):
-            if a[i]==b[k]:
-                return "True"
-                break
-    return "False"
-
-if commonelement(["prints","Prints","PRINTS"],os.listdir())=="True":
-    prints_folder = path + "\\prints"
-    duolingo_question_mensagem=translator.translate(
-            "We found a folder named 'prints', do you want to extract the text from the 'prints'? (yes = y, no = n):  ", src="en", dest=chosen_language)
-    duolingo_question=input(duolingo_question_mensagem.text)
-try:
-    tess.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-except:
-    if duolingo_question.lower()[0]=="y":
-        try:
-            tess.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe' #Tesseract is normally installed in the C drive
-        except:
-            pytesseract_error=translator.translate(
-            "Erro: Tesseract-OCR not found", src="en", dest=chosen_language)
-            print(Back.RED + pytesseract_error, end="")
-            print(Style.RESET_ALL)
-            pytesseract_noninstalled=translator.translate(
-            "Maybe you have not installed Tesseract-OCR, in that case open 'https://github.com/UB-Mannheim/tesseract/wiki' and install the software. ", src="en", dest=chosen_language)
-            pytesseract_error_path=translator.translate(
-            "Put your directory", src="en", dest=chosen_language)
-            tess.pytesseract.tesseract_cmd = input(pytesseract_error_path)
-        # Creating the spreadsheet
-        file = xlsxwriter.Workbook("duolingo.xlsx")
-        table = file.add_worksheet()
-        table.write("A1", "Front")
-        table.write("B1", "Back")
-        table.write("C1","Prints")
-        prints=os.listdir(prints_folder) #lista com todos os prints em jpg,png...
-        phrases=[]
-        i=0
-        textextraction_mensage= translator.translate("Extracting Text 0/2",src="en", dest=chosen_language)
-        print(textextraction_mensage)
-        for j in prints:
-            img=Image.open(prints_folder+'\\'+ j)
-            text=tess.image_to_string(img,lang='fra',config=r'--oem 3 --psm 6')
-            text=text.replace("@","").replace("\\","").replace(">","").replace(")","").replace("!","I").replace('|',"").replace('.','').replace("$","").replace("(","").replace('«',"" ).replace("1","").replace("5","")
-            text=text.strip()
-            text=text.replace("\n"," ")
-            phrases.append(text)
-            img.close()
-            if phrases[i] !='':
-                table.write("A" + str(i+2), phrases[i])
-                table.write("C"+str(i+2),str(j))
-            else:
-                del phrases[i]
-                i=i-1
-            i=i+1
-        warning_duolingo = translator.translate(
-            "Fill the back of the cards and verify if the phrases are correct,save,close the file and press any keyboard key to continue",
-            src="en", dest=chosen_language)
-        warning_duolingo = input(warning_duolingo.text)
-        file.close()
+filesinthedirectory=[j for j in os.listdir()]#if j[-5:-1]==".xlsx"] #show the excel tables that are in your current folder
+tablesinthedirectory=[]
+for j in filesinthedirectory:
+    try:
+        if j[-5::]==".xlsx" and j[0:2]!="~$": #the ~$ exclude temporary files
+            tablesinthedirectory.append(j)
+    except:pass
+print(tablesinthedirectory)
 
 table_error=0 # it gets stuck in loop until you put the right name of the excel table
 while table_error==0:

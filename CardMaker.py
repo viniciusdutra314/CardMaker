@@ -110,7 +110,7 @@ def wordinphrase(word,phrase):
 
 if check=="y" and cardtype=='vocabulary':
     while j<len(phrases):
-        if words.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","") not in phrases.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":",""):
+        if words.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","").replace("!",".").replace("?",".") not in phrases.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","").replace("!",".").replace("?",".") :
             word_notinphrase=translator.translate(f"Erro: Word not in the phrase ",src="en",dest=chosen_language)
             print(Back.RED + word_notinphrase.text,end="")
             print(Style.RESET_ALL)

@@ -26,14 +26,15 @@ The code was created using a variety of external python libraries, fortunately, 
 It is also possible to run the code on Google Colab using the **CardMaker (google colab)**, some additional steps to add the audio will be required, but the code can idea is the same, just click [here](https://colab.research.google.com/github/viniciusdutra314/CardMaker/blob/main/CardMaker%20(google%20colab).ipynb) 
 ## Type of Cards
 ### Formatting
-All the excel tables used are in the folder [Tables examples](https://github.com/viniciusdutra314/CardMaker/tree/main/Tables%20examples). All the examples were created thinking in a person that was studying Spanish.
+All the excel tables used are in the folder [Tables examples](https://github.com/viniciusdutra314/CardMaker/tree/main/Tables%20examples). All the examples were created thinking of a person that was studying Spanish.
 The first row of the excel is what determines the type of card, so please copy this first row exactly as it is shown in the images, otherwise, the code will not run but it doesn't have a card type selected. 
 ## Vocabulary
 #### Excel Table
 In the **Front** column you should put the phrases that you want to learn and in the **Back** the words that you do not know
 <img src="images/vocabularytable.jpg" width="680" height="230">
+
 #### Result
-The front of the card is the phrase if the unknown word highlighted and the back is the translation of the word (front and back have audios, in this case the pronunciation in Spanish)
+The front of the card is the phrase if the unknown word highlighted and the back is the translation of the word (front and back have audios, on this case the pronunciation in Spanish)
 
 <img src="images/resultvocabulary.jpg" width="670" height="230">
 
@@ -43,15 +44,40 @@ In the first column **Speaking** you should put the phrase that you want to spea
 
 <img src="images/speakingtable.jpg" width="670" height="230">
 #### Result
-The idea is to create active vocabulary, you have a phrase that you need to say in other language
+The idea is to create active vocabulary, you have a phrase that you need to say in another language
 
 <img src="images/resultspeaking.jpg" width="670" height="230">
-## Writing
-#### Excel Table
-It is very similar to the cardtype **Speaking**, in terms of excel you just need to put the phrases in the **Writing** column.
 
-<img src="images/writing.jpg" width="670" height="230">
+## Writing
+
+#### Excel Table
+It is very similar to the card type **Speaking**, in terms of excel you just need to put the phrases in the **Writing** column.
+
+<img src="images/writingtable.jpg" width="670" height="230">
+
 #### Result
-This mode is based on the "type in answer", you training your writing, any mistake will appear as red
+This mode is based on the "type in answer", you training your writing, and any mistake will appear as red
 
 <img src="images/writingresult.jpg" width="700" height="350">
+
+# Running the Code
+## Choose the language that your cards will be translated
+First of all, the **ENTIRE** code was commented on, if you have any technical questions just look at the code.
+I create the code in multiple languages, so the first line will ask you about your language, type in the format of 2 characters. If you don't know how is your language in that format or if your language has support, access this [link](https://py-googletrans.readthedocs.io/en/latest/)
+
+For sake of showing that this really works in any language, here's the entire code in Japanese (using "ja" as the chosen language)
+
+<img src="images/codeinjaponese.jpg" width="580" height="260">
+
+## What is the name of your Anki User
+On google colab this will not appear, but if you have installed in your computer you should type the name of you Anki account, in my case is "Dutra"
+
+<img src="images/ankiaccount.jpg" width="256" height="256">
+
+## Name of the excel table
+It will appear a list with all the excel tables found in the folder that you are executing the code (in google colab is in archives), now you type the table that you want, you should not include the ".xlsx"
+
+<img src="images/exceltableselect.jpg">
+
+## Do you want to check the cards before they been save? (Yes = y No= n): 
+On my tests if you are using the **Vocabulary** mode is highly recommended to check the cards before saving

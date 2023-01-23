@@ -34,7 +34,7 @@ while os.path.exists(audio_path)==0:
         audio_path = os.getenv('APPDATA') + "\\" + "Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
     if times_audio>=2: # the second it assumes that the error is in the directory
         print("Maybe you have installed Anki in an alternative directory")
-        audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media)  ")path = os.getcwd() #your current directory
+        audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media) ")#your current directory
 
 filesinthedirectory=[j for j in os.listdir()]#if j[-5:-1]==".xlsx"] #show the excel tables that are in your current folder
 tablesinthedirectory=[]

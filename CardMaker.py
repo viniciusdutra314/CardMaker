@@ -17,6 +17,13 @@ t_o=time.time() # counting time
 threads=round(cpu_count()/2) #using half of the threads to acelerate the code...you can change this if you want
 
 chosen_language=input("Choose the language that your cards will be translated (ex:pt,fr,en): ")
+for j in range(len(chosen_language)): #secret command, you can change the number of cores typing the number of cores after the chosen language (Ex: es !4)
+    if chosen_language[j]=="!":
+        threads=int(chosen_language[j+1::])
+        tempthread=j
+try:
+    chosen_language=chosen_language[0:tempthread].replace(" ","")
+except:pass
 #chosen_language="pt"
 user_message="What is the name of your Anki User "
 user_message=translator.translate(user_message, src="en", dest=chosen_language)
@@ -67,7 +74,7 @@ while os.path.exists(os.getcwd()+"\\"+deck_name+u+".apkg")==True:
     counter+=1
     u=str(counter)
 deck_name+=str(u)
-check_message=translator.translate("Do you want to check the cards before they been save? (Yes = y No= n)",src="en",dest=chosen_language)
+check_message=translator.translate("Do you want to check the cards before they are saved? (Yes = y No= n)",src="en",dest=chosen_language)
 check=input(check_message.text+": ")
 archive = archive.dropna()
 archive.reset_index(drop=True, inplace=True)
@@ -108,20 +115,22 @@ def wordinphrase(word,phrase):
     if equal==0:return False
     else: return True
 
-if check=="y" and cardtype=='vocabulary':
-    while j<len(phrases):
-        if words.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","").replace("!",".").replace("?",".") not in phrases.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","").replace("!",".").replace("?",".") :
-            word_notinphrase=translator.translate(f"Erro: Word not in the phrase ",src="en",dest=chosen_language)
-            print(Back.RED + word_notinphrase.text,end="")
-            print(Style.RESET_ALL)
-            print(phrases.iloc[j][0])
-            print(words.iloc[j][0])
-            correctword_message = translator.translate("Correct word: ", src="en", dest=chosen_language)
-            correctword=input(correctword_message.text)
-            words.iloc[j][0] = correctword
-            if wordinphrase(words.iloc[j][0].lower(),phrases.iloc[j][0].lower())==True:
-                j+=1
-        else:j+=1
+if cardtype=='vocabulary':
+    checkwordinphrase = input(translator.translate("Do you want to check if the word is in the phrase? (yes=y, no=n)", src="en",dest=chosen_language).text)
+    if checkwordinphrase in ["Y","y","YES","yes","Yes"]:
+        while j<len(phrases):
+            if words.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","").replace("!",".").replace("?",".") not in phrases.iloc[j][0].lower().replace(".","").replace(",","").replace(";","").replace(":","").replace("!",".").replace("?",".") :
+                word_notinphrase=translator.translate(f"Erro: Word not in the phrase ",src="en",dest=chosen_language)
+                print(Back.RED + word_notinphrase.text,end="")
+                print(Style.RESET_ALL)
+                print(phrases.iloc[j][0])
+                print(words.iloc[j][0])
+                correctword_message = translator.translate("Correct word: ", src="en", dest=chosen_language)
+                correctword=input(correctword_message.text)
+                words.iloc[j][0] = correctword
+                if wordinphrase(words.iloc[j][0].lower(),phrases.iloc[j][0].lower())==True:
+                    j+=1
+            else:j+=1
 unique_language_message=translator.translate("If there's just one unique language, type it here (Example: French=fr), if not, press any key: ",sr="en",dest=chosen_language)
 unique_language=input(unique_language_message.text)
 if len(unique_language)==2: # if this is a language like en,fr,pt
@@ -140,6 +149,8 @@ temp1=[]
 temp2=[]
 numbers=[]
 print(translator.translate("Translating...(1/2)",src="en",dest=chosen_language).text)
+lenphrasestemp=len(phrases)
+
 def translate(k,threads):
     global phrases,words,chosen_language,alpha,translation_words,translation_phrases,languages
     for j in range(k,len(phrases),threads):
@@ -177,84 +188,80 @@ for j in range(len(phrases)):
             words[j]=(words[j].replace(numbers[j],""))
     except:pass
 j=0
+if lenphrasestemp!=len(phrases):
+    print(Back.RED+translator.translate(f"If this numbers {lenphrasestemp} and {len(phrases)} are too different...So "+"You're using too much cores, that caused an error in the multiprocessing"+"\n"+"You can change the number of cores restarting the code"+"\n"
+                               +"In the chosen languages put the number of cores after ! (Ex: es !2)"+"\n"+
+                               "This way you are using 2 cores, in order to not cause erros put number of cores=1",src="en",dest=chosen_language).text+Style.RESET_ALL)
+
+
 if check.lower()=="y" and cardtype=="vocabulary":
     checkphrases_message=translator.translate("Para mudar uma tradução escreva a nova tradução caso contrario deixe vazio"+"\n"+
                                               "É possível deletar um card, deletar=d"+ "\n"
-                                              + "É possível voltar, voltar=b" + "\n" +
+                                              + "É possível voltar, voltar=b" + "\n" + "Se você quiser ir em uma frase especifica escreva j=numéro frase" +"\n"
                                               "Se o idioma estiver errado, digite !l no final da tradução nova",src="pt",dest=chosen_language)
     print(checkphrases_message.text)
     while j<len(phrases):
-        print("----", j+1,"/",len(phrases),"-----")
-        print(translator.translate("Language of the card",src="en",dest=chosen_language).text,Fore.LIGHTYELLOW_EX+ languages[j],Style.RESET_ALL)
-        phrasehl=phrases[j].split()
-        stringtoprint=""
-        for k in range(len(phrasehl)):
-            if phrasehl[k]==words[j].replace(" ",""):
-                position=k
-                stringtoprint+=Back.GREEN+phrasehl[k]+Style.RESET_ALL+ " "
-            else: stringtoprint+=phrasehl[k] +" "
-        print(stringtoprint)
-        print("---"+translator.translate("Translation",src="en",dest=chosen_language).text+"---")
-        translation=(translator.translate(phrases[j], src=str(languages[j]), dest=chosen_language)).text
-        translation=translation.split()
-        stringtoprint=""
-        interval=1
-        for k in range(len(translation)):
-            try:
-                if k==position-interval:
-                    stringtoprint+=Back.BLUE + translation[k] +" "
-                if k==position+interval:
-                    stringtoprint+=translation[k]+Style.RESET_ALL +" "
-                if k not in [position-interval,position+interval]:
-                    if k == len(translation)-1:
-                        stringtoprint += translation[k] + Style.RESET_ALL
-                    else:
-                        stringtoprint += translation[k] + " "
-            except:
-                stringtoprint+=translation[k]+" "
-        print(stringtoprint)
-        print("---" + translator.translate("Translated word", src="en", dest=chosen_language).text + "---")
-        print(Back.RED + words[j],"=",translation_words[j],end="")
-        print(Style.RESET_ALL)
-        newtranslation=input(("---"+translator.translate("New translation",src="en",dest=chosen_language).text)+": ")
-        if newtranslation=="s":
-            savefile = xlsxwriter.Workbook(deck_name+"stopped"+".xlsx")
-            stoppedtable = savefile.add_worksheet()
-            stoppedtable.write("A1", "Front")
-            stoppedtable.write("B1", "Back")
-            stop = j
-            for k in range((len(phrases)-j)):
-                try:
-                    stoppedtable.write("A"+str(j+k),phrases[j+k])
-                    stoppedtable.write("B"+str(j+k),words[j+k])
-                except:pass
-            j=len(phrases)+2
-            savefile.close()
-            break
-        if newtranslation.lower().count("!l")!=0:
-            languages[j]=input(translator.translate("New language",src="en",dest=chosen_language).text+": ")
-            newtranslation=newtranslation.replace("!l","")
-        if len(newtranslation)!=newtranslation.count(" ") and newtranslation!="del" :
-            if newtranslation.lower()!='b':
-                translation_words[j]=newtranslation
-        if newtranslation.lower()=="d":
-            del phrases[j], words[j],translation_words[j],translation_phrases[j]
-        if newtranslation!="d": j+=1
-        if newtranslation=="b":
-            j=j-2
-            try:newtranslation=translation_phrases[j+2]
-            except:newtranslation=translation_phrases[j]
-try:
-    gamma=stop
-except:
-    stop=len(phrases)
-
+        try:
+            print("----", j+1,"/",len(phrases),"-----")
+            print(translator.translate("Language of the card",src="en",dest=chosen_language).text,Fore.LIGHTYELLOW_EX+ languages[j],Style.RESET_ALL)
+            phrasehl=phrases[j].split()
+            stringtoprint=""
+            for k in range(len(phrasehl)):
+                if phrasehl[k]==words[j].replace(" ",""):
+                    position=k
+                    stringtoprint+=Back.GREEN+phrasehl[k]+Style.RESET_ALL+ " "
+                else: stringtoprint+=phrasehl[k] +" "
+            print(stringtoprint)
+            print("---"+translator.translate("Translation",src="en",dest=chosen_language).text+"---")
+            translation=(translator.translate(phrases[j], src=str(languages[j]), dest=chosen_language)).text
+            print(translation)
+            print("---" + translator.translate("Translated word", src="en", dest=chosen_language).text + "---")
+            print(Back.RED + words[j],"=",translation_words[j],end="")
+            print(Style.RESET_ALL)
+            newtranslation=input(("---"+translator.translate("New translation",src="en",dest=chosen_language).text)+": ")
+            if newtranslation=="s":
+                savefile = xlsxwriter.Workbook(deck_name+"stopped"+".xlsx")
+                stoppedtable = savefile.add_worksheet()
+                stoppedtable.write("A1", "Front")
+                stoppedtable.write("B1", "Back")
+                stop = j
+                for k in range((len(phrases)-j)):
+                    try:
+                        stoppedtable.write("A"+str(j+k),phrases[j+k])
+                        stoppedtable.write("B"+str(j+k),words[j+k])
+                    except:
+                        print(translator.translate("J to large",src="en",dest=chosen_language))
+                j=len(phrases)+2
+                savefile.close()
+                break
+            if "j=" in newtranslation:
+                if j>len(phrases):
+                    j=int(newtranslation[2::])
+                    j=j-2
+                else:
+                    print(translator.translate("J to big, greater than the number of phrases",src="en",dest=chosen_language).text)
+            if newtranslation.lower().count("!l")!=0:
+                languages[j]=input(translator.translate("New language",src="en",dest=chosen_language).text+": ")
+                newtranslation=newtranslation.replace("!l","")
+            if len(newtranslation)!=newtranslation.count(" ") and newtranslation!="del" :
+                if newtranslation.lower()!='b':
+                    translation_words[j]=newtranslation
+            if newtranslation.lower()=="d":
+                del phrases[j], words[j],translation_words[j],translation_phrases[j]
+            if newtranslation!="d": j+=1
+            if newtranslation=="b":
+                j=j-2
+                try:newtranslation=translation_phrases[j+2]
+                except:newtranslation=translation_phrases[j]
+        except:
+            del phrases[j]
+            j+=1
 if check.lower()=="y" and cardtype in ["speaking","writing"]:
     checkfile = xlsxwriter.Workbook(deck_name + "_checkspeaking" + ".xlsx")
     checktable = checkfile.add_worksheet()
     checktable.write("A1", "speakingorwriting")
     checktable.write("B1", "Translation")
-    for j in range(stop):
+    for j in range(len(phrases)):
         checktable.write("A"+str(j+2),phrases[j])
         checktable.write("B"+str(j+2),translation_phrases[j])
     checkfile.close()
@@ -272,8 +279,8 @@ if check.lower()=="y" and cardtype in ["speaking","writing"]:
         templist2.append(phrases.iloc[k][0])
     translation_phrases=templist1
     phrases=templist2
-    stop=len(phrases)
 print(translator.translate("Audios...(2/2)",src="en",dest=chosen_language).text)
+stop = len(phrases)
 def audiogenerator(k,threads):
     global words,phrases,languages,audio_path,deck_name,stop
     for j in range(k, stop,threads):

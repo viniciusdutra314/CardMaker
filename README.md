@@ -70,14 +70,22 @@ For sake of showing that this really works in any language, here's the entire co
 <img src="images/codeinjaponese.jpg" width="580" height="260">
 
 ## What is the name of your Anki User
-On google colab this will not appear, but if you have installed in your computer you should type the name of you Anki account, in my case is "Dutra"
+On Google Colab, this will not appear, but if you have installed on your computer you should type the name of your Anki account, in my case is "Dutra"
 
 <img src="images/ankiaccount.jpg" width="256" height="256">
 
 ## Name of the excel table
-It will appear a list with all the excel tables found in the folder that you are executing the code (in google colab is in archives), now you type the table that you want, you should not include the ".xlsx"
+It will appear a list with all the excel tables found in the folder that you are executing the code (in Google Colab is in archives), now you type the table that you want, you should not include the ".xlsx"
 
 <img src="images/exceltableselect.jpg">
 
-## Do you want to check the cards before they been save? (Yes = y No= n): 
-On my tests if you are using the **Vocabulary** mode is highly recommended to check the cards before saving
+## Do you want to check the cards before they are saved? (Yes = y No= n): 
+On my tests, if you are using the **Vocabulary** mode is highly recommended to check the cards before saving
+
+## Erro: Word not in the phrase
+In the vocabulary mode, the code will check if the words in the **Back** column are really in the phrases **Front**. In that case, the code notices an error in the accent of the word investigacíon != investagácion
+
+<img src="images/wordnotinphrase.jpg">
+
+## If there's just one unique language, type it here (Example: French=fr), if not, press any key:
+You can create excel tables with multi-languages at the same time and the code will identify the languages automatically, but this comes with a cost that sometimes the language will be identified incorrectly, but the language can be corrected if the check mode is activated. If you are dealing with just one language is highly recommended to specify the language right in the beginning, with no probability of error.

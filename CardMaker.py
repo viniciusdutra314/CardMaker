@@ -10,6 +10,7 @@ from selenium import webdriver # open color custom website
 import time #count the amount of time used in creating cards
 from threading import Thread #acelerate the code
 import xlsxwriter #excel tables
+from zipfile import ZipFile #create a zip with the audios, in case the code doesn't work
 
 translator = Translator() #start translator
 init(strip=False) #colors in the terminal
@@ -25,23 +26,28 @@ try:
     chosen_language=chosen_language[0:tempthread].replace(" ","")
 except:pass
 #chosen_language="pt"
-user_message="What is the name of your Anki User "
+user_message="What is the name of your Anki User? If you want to extract the audios (type: extract) "
 user_message=translator.translate(user_message, src="en", dest=chosen_language)
 usuario=input(f"{user_message.text} : ")
 #usuario="Dutra"
-audio_path=os.getenv('APPDATA') + "\\" +"Anki2" + "\\" + str(usuario) + "\\" + "collection.media" #anki audio path, normally is in the C drive, but you can change if you have installed Anki in other path
-times_audio=0
-while os.path.exists(audio_path)==0:
-    times_audio+=1
-    if times_audio==1: # the first time it assumes that the error is in the user's name
-        error_user = translator.translate("User not found!", src="en", dest=chosen_language)
-        print(Back.RED + error_user.text, end="")
-        print(Style.RESET_ALL)
-        usuario = input(f"{user_message.text} : ")
-        audio_path = os.getenv('APPDATA') + "\\" + "Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
-    if times_audio>=2: # the second it assumes that the error is in the directory
-        print("Maybe you have installed Anki in an alternative directory")
-        audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media) ")#your current directory
+if usuario.count("extract") + usuario.count("Extract") + usuario.count("EXTRACT")==0:
+    audio_path=os.getenv('APPDATA') + "\\" +"Anki2" + "\\" + str(usuario) + "\\" + "collection.media" #anki audio path, normally is in the C drive, but you can change if you have installed Anki in other path
+    times_audio=0
+    while os.path.exists(audio_path)==0:
+        times_audio+=1
+        if times_audio==1: # the first time it assumes that the error is in the user's name
+            error_user = translator.translate("User not found!", src="en", dest=chosen_language)
+            print(Back.RED + error_user.text, end="")
+            print(Style.RESET_ALL)
+            usuario = input(f"{user_message.text} : ")
+            audio_path = os.getenv('APPDATA') + "\\" + "Anki2" + "\\" + str(usuario) + "\\" + "collection.media"
+        if times_audio>=2: # the second it assumes that the error is in the directory
+            print("Maybe you have installed Anki in an alternative directory")
+            audio_path=input("Please put your anki directory media, example: (C:\\Users\\os_system_user\\AppData\\Roaming\\Anki2\\user_name\\collection.media) ")#your current directory
+else:
+    if not os.path.exists('tempaudios'):
+        os.mkdir('tempaudios')
+    audio_path="tempaudios"
 
 filesinthedirectory=[j for j in os.listdir()]#if j[-5::]==".xlsx"] #show the excel tables that are in your current folder
 tablesinthedirectory=[]
@@ -450,6 +456,19 @@ for i in range(0, stop):
 
 
 genanki.Package(deck).write_to_file(str(deck_name) +'.apkg')
+
+
+readme=open("readme.txt","w")
+readme.write("copy this audios into your collection.media anki folder")
+readme.close()
+
+with ZipFile("audios.zip","w") as zip:
+  zip.write("readme.txt")
+  for j in os.listdir("tempaudios/"):
+    zip.write("tempaudios"+"//"+j)
+    os.remove("tempaudios"+"//"+j)
+os.remove("readme.txt")
+os.rmdir('tempaudios')
 
 tf=time.time()
 

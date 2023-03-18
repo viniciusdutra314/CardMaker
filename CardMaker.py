@@ -468,8 +468,9 @@ with ZipFile("audios.zip","w") as zip:
     zip.write("tempaudios"+"//"+j)
     os.remove("tempaudios"+"//"+j)
 os.remove("readme.txt")
-os.rmdir('tempaudios')
-
+try:
+    os.rmdir('tempaudios')
+except:pass
 tf=time.time()
 
 deltat=tf -t_o

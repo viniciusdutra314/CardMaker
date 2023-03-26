@@ -1,13 +1,16 @@
 # *CardMaker is a library to create anki language learning cards programmatically*
 
 ## Creator
-Hey my name is Vinícius Dutra and I'm currently studying computational physics at USP São Carlos, I'm the creator of the Brazilian youtube channel [Singularidade](https://www.youtube.com/Singularidade). I created a video explaining this library, it is the something thing that is written here but in video, the video is subtitled in multiple languages (Portuguese, English, Spanish and French) if you want to watch the video
+Hey my name is Vinícius Dutra and I'm currently studying computational physics at USP São Carlos, I'm the creator of the Brazilian youtube channel [Singularidade](https://www.youtube.com/Singularidade). I created a video explaining this library, it is the something thing that is written here but in video, the video is subtitled in multiple languages (Portuguese, English, Spanish and French) if you want to watch the video, this is the video link
 
 ## What it does?
-You will need to save your phrases (in the foreign language that you are studying) in one excel table, the code will highlight the word that you want do not know and provide a possible translation for that word. Besides that, the code will create a temporary translation for the phrase in order to help you judge if the translation of the word was correct, if not, inside the code you can change the translation. After that, the code will create a deck .apkg file (Anki file) with audio in the front and at the back of the card. The code has 3 card modes (vocabulary, speaking, and writing) and many more features that will be explained in the following topics
-## Language Support:
-
+You will need to save your phrases (in the foreign language that you are studying) in one excel table, the code will highlight the word that you want to know and provide a possible translation for that word. Besides that, the code will create a temporary translation for the phrase in order to help you judge if the translation of the word is correct, if not, inside the code you can change the translation. After that, the code will create a deck .apkg file (Anki file) with audio in the front and at the back of the card. The code has 4 card modes (vocabulary, speaking, writing and pronunciation) and many more features that will be explained in the following topics
+## Language Support (+200):
+The code uses Google Translate API to translate and create voice audios, so theoretically the code should work with all the languages supported by the API, here's a list of all the [supported languages](https://cloud.google.com/text-to-speech/docs/voices?hl=pt-br)
 ## Installation
+#### Run in Google Colab
+It is also possible to run the code on Google Colab using the **CardMaker (google colab)**, some additional steps to add the audio will be required, but the code can idea is the same, just click [here](https://colab.research.google.com/github/viniciusdutra314/CardMaker/blob/main/CardMaker%20(google%20colab).ipynb).
+
 #### In your Computer
 The code was created using a variety of external python libraries, fortunately, all of them can be installed using the !pip install command, just be aware that some libraries (googletrans==3.1.0a0) have a specific version used. Here is the list of all the commands to install and the reason why the code uses these external libraries: 
 ```python
@@ -22,19 +25,18 @@ The code was created using a variety of external python libraries, fortunately, 
 !pip install xlsxwriter #create excel tables
 !pip install openpyxl 
 ```
-#### Run in Google Colab
-It is also possible to run the code on Google Colab using the **CardMaker (google colab)**, some additional steps to add the audio will be required, but the code can idea is the same, just click [here](https://colab.research.google.com/github/viniciusdutra314/CardMaker/blob/main/CardMaker%20(google%20colab).ipynb) 
+ 
 ## Type of Cards
 ### Formatting
 All the excel tables used are in the folder [Tables examples](https://github.com/viniciusdutra314/CardMaker/tree/main/Tables%20examples). All the examples were created thinking of a person that was studying Spanish.
-The first row of the excel is what determines the type of card, so please copy this first row exactly as it is shown in the images, otherwise, the code will not run but it doesn't have a card type selected. 
+The first row of the excel is what determines the type of card, so please copy this first row exactly as it is shown in the images, otherwise, the code will not run because it doesn't have a card type selected. 
+
 ## Vocabulary
 #### Excel Table
 In the **Front** column you should put the phrases that you want to learn and in the **Back** the words that you do not know
 <img src="images/vocabularytable.jpg" width="680" height="230">
-
 #### Result
-The front of the card is the phrase if the unknown word highlighted and the back is the translation of the word (front and back have audios, on this case the pronunciation in Spanish)
+The front of the card is the phrase if the unknown word highlighted and the back is the translation of the word (front and back have audios)
 
 <img src="images/resultvocabulary.jpg" width="670" height="230">
 
@@ -43,6 +45,7 @@ The front of the card is the phrase if the unknown word highlighted and the back
 In the first column **Speaking** you should put the phrase that you want to speak, there is no second column, only the first one.
 
 <img src="images/speakingtable.jpg" width="670" height="230">
+
 #### Result
 The idea is to create active vocabulary, you have a phrase that you need to say in another language
 
@@ -59,6 +62,18 @@ It is very similar to the card type **Speaking**, in terms of excel you just nee
 This mode is based on the "type in answer", you training your writing, and any mistake will appear as red
 
 <img src="images/writingresult.jpg" width="700" height="350">
+
+## Pronunciation
+
+#### Excel Table
+Make a list of all the words or phrases that you want to learn how to pronounce
+
+<img src="images/pronunciationimage.jpg" width="630" height="315">
+
+#### Result
+The front is the word that you're learning how to pronounce and the back is just one audio with the pronunciation
+
+<img src="images/pronunciationcard.jpg" width="630" height="315">
 
 # Running the Code
 ## Choose the language that your cards will be translated

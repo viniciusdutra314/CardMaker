@@ -1,4 +1,4 @@
-# *CardMaker is a library to create anki language learning cards programmatically*
+# *CardMaker is a code to quickly create anki language learning cards*
 
 ## Creator
 Hey my name is Vinícius Dutra and I'm currently studying computational physics at USP São Carlos, I'm the creator of the Brazilian youtube channel [Singularidade](https://www.youtube.com/Singularidade). I created a video explaining this library, it is the same thing that is written here but in video, the video is subtitled in multiple languages (Portuguese, English, Spanish and French) if you want to watch the video, this is the video link

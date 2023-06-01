@@ -5,7 +5,6 @@ from openpyxl import load_workbook,Workbook
 from gtts import gTTS #generate audios
 import os #get the file directories
 import time #count the amount of time used in creating cards
-from zipfile import ZipFile #for some reason google colab don't download folders, so i'll convert the audio folder into winrar
 
 translator = Translator() #start translator
 init(strip=False) #colors in the terminal
@@ -21,8 +20,8 @@ while True:
     translate("checking if the chosen_language is actually working")
     break
   except: 
-    print("You have typed your language wrongly or unfortunatly your language is not supported by the code :(")
-    chosen_language=input()
+    print("You have typed your language wrongly or unfortunately your language is not supported by the code :(")
+    chosen_language=input("Choose the language that your cards and the interface will be translated (ex:pt,fr,en): ").lower()
 tables_in_the_directory=[j for j in os.listdir() if j[-5::]==".xlsx" and j[0:2]!="~$" and j not in ["checktable.xlsx","verifiedtable.xlsx"]] 
 
 if len(tables_in_the_directory)>1:  #multiple tables to select
@@ -34,7 +33,8 @@ if len(tables_in_the_directory)>1:  #multiple tables to select
       wrong_name=translate("Wrong name!")
       print(Fore.RED + wrong_name,Style.RESET_ALL,end="")
 else: 
-  table_name=tables_in_the_directory[0]
+  try: table_name=tables_in_the_directory[0]
+  except: raise ValueError(translate("You haven't import any excel table"))
   print(translate("Using the table")+" " +Fore.GREEN +table_name+Style.RESET_ALL)
 workbook1 ,deck_name= load_workbook(table_name), table_name[:-5:]
 table=workbook1.active
@@ -135,30 +135,29 @@ print(translate("Audios...(2/2)"))
 
 if not os.path.exists('tempaudios'):
   os.mkdir('tempaudios')
-  audio_path="//content//tempaudios"
+audio_path="tempaudios"
 
 for j in range(len(phrases)):
-  try:
-    if cardtype=="v":
-      audio = gTTS(words[j]+"."+phrases[j], lang=languages[j])
-      audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
-      audio= gTTS(words[j], lang=languages[j])
-      audio.save(audio_path + "//" + deck_name + "word" + str(j) + '.mp3')
-    if cardtype in ["s","w"]:
-      audio = gTTS(phrases[j], lang=languages[j])
-      audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
-    if cardtype=="p":
-      audio = gTTS(phrases[j], lang=languages[j])
-      audio.save(audio_path + "//" + deck_name + "pronunciation" + str(j) + '.mp3')
-  except:pass
+    try:
+      if cardtype=="v":
+        audio = gTTS(words[j]+"."+phrases[j], lang=languages[j])
+        audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
+        audio= gTTS(words[j], lang=languages[j])
+        audio.save(audio_path + "//" + deck_name + "word" + str(j) + '.mp3')
+      if cardtype in ["s","w"]:
+        audio = gTTS(phrases[j], lang=languages[j])
+        audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
+      if cardtype=="p":
+        audio = gTTS(phrases[j], lang=languages[j])
+        audio.save(audio_path + "//" + deck_name + "pronunciation" + str(j) + '.mp3')
+    except:pass
 
 from random import randint
 id_deck =randint(1e9, 1e10)
 fields=[{'name': 'Question'},{'name': 'Answer'},{'name': 'MyMedia'}]
 
-deck = genanki.Deck(
-    id_deck,
-    deck_name)
+deck = genanki.Deck(id_deck,deck_name)
+
 if cardtype in ["v","s"]:
     my_model = genanki.Model(
         id_deck,
@@ -166,7 +165,7 @@ if cardtype in ["v","s"]:
         fields=fields,
         templates=[
             {
-                'name': 'Card 1',
+                'name': 'Card Q&A',
                 'qfmt': '{{Question}}<br>{{MyMedia}}',
                 'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
             },
@@ -200,22 +199,27 @@ if cardtype=="p":
 print(Fore.BLUE + "Blue",Fore.RED + "Red",Fore.YELLOW + "Yellow",Fore.MAGENTA + "Purple",Fore.GREEN + "Green",Fore.LIGHTMAGENTA_EX + "Pink"+Style.RESET_ALL)
 color=input(translate("Select a color: "))[0:2].lower()
 colors_rgb = {'gr': '<span style="color: rgb(81, 255, 37);">', 're': '<span style="color: rgb(228, 14, 14);">',
-              'bl': '<span style="color: rgb(18, 166, 252);">',
-              'ye': '<span style="color: rgb(249, 255, 54);">',
-              'pu': '<span style="color: rgb(198, 38, 255);">',
-              'pi': '<span style="color: rgb(255, 14, 192);">', }
-
-color=colors_rgb[color]
+                  'bl': '<span style="color: rgb(18, 166, 252);">',
+                  'ye': '<span style="color: rgb(249, 255, 54);">',
+                  'pu': '<span style="color: rgb(198, 38, 255);">',
+                  'pi': '<span style="color: rgb(255, 14, 192);">', }
+while True:
+  try:
+    color=colors_rgb[color]
+    break
+  except:
+    print(translate("Color invalid!"))
+    color=input(translate("Select a color: "))[0:2].lower()
 
 def insert_sound(file_name): return "[" + "sound:" + file_name + ".mp3" + "]"
-def bold(text): return '<u><b><i>' + text +'</i></b></u></span>'
+def bold(text): return '<u><b><i>' + text +'</i></b></u></span> '
 def create_note(text):
   global i,my_model,languages
   return genanki.Note(model=my_model,fields=text,tags=[str(languages[int(i)]), "cardmaker"])
 
 for i in range(len(phrases)):
         if cardtype=="s":
-            note =create_note([color + bold(languages[i] ) +translated_phrases[i],insert_sound(deck_name + "phrase" + str(i)) + phrases[i],"" ])
+            note =create_note([color + bold(languages[i] ) +translated_phrases[i],insert_sound(deck_name + "phrase" + str(i)) + phrases[i],""])
         if cardtype=="v":
             note =create_note(["",insert_sound(deck_name + "word" + str(i)) + color + bold(words[i])+  " == " + translated_words[i],
                                insert_sound(deck_name + "phrase" + str(i))  + color+ bold(words[i]) + ". " +phrases[i]])
@@ -225,20 +229,12 @@ for i in range(len(phrases)):
             note = create_note([color + bold(phrases[i]),insert_sound(deck_name + "pronunciation" + str(i))," ", ""])
         deck.add_note(note)
 
-genanki.Package(deck).write_to_file(deck_name +'.apkg')
-
-readme=open("readme.txt","w")
-readme.write(translate("copy this audios into your collection.media anki folder"+"\n"+"here is an example where you may find it"+"\n"))
-readme.write("C:\\Users\\dutra\\AppData\\Roaming\\Anki2\\Dutra\\collection.media")
-readme.close()
-
-with ZipFile(f"audios_{deck_name}.zip","w") as zip:
-  zip.write("readme.txt")
-  for j in os.listdir("tempaudios/"):
-    zip.write("tempaudios"+"//"+j)
-    os.remove("//content//tempaudios"+"//"+j)
-os.remove("readme.txt")
-os.rmdir('tempaudios')
-
+media_files=["tempaudios//"+j for j in os.listdir("tempaudios")]
+genanki.Package(deck,media_files=media_files).write_to_file(deck_name +'.apkg')
+try:
+   for j in os.listdir("tempaudios"):os.remove("tempaudios//"+j)
+except:
+   print(translate("Permissão negada para deletar os tempaudios, delete manualmente"))
+   
 deltat=time.time() -t_o
 print(f"Congratulations, {len(phrases)} flashcards in {round(deltat/60,1)} minutes! {round(60*len(phrases)/deltat,1)} flashcards per minute")

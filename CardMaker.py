@@ -33,9 +33,11 @@ if len(tables_in_the_directory)>1:  #multiple tables to select
     else:
       wrong_name=translate("Wrong name!")
       print(Fore.RED + wrong_name,Style.RESET_ALL,end="")
-else: 
-  table_name=tables_in_the_directory[0]
-  print(translate("Using the table")+" " +Fore.GREEN +table_name+Style.RESET_ALL)
+else:
+  try: 
+    table_name=tables_in_the_directory[0]
+    print(translate("Using the table")+" " +Fore.GREEN +table_name+Style.RESET_ALL)
+  except: raise ValueError(translate("There is no table in your current directory"))
 workbook1 ,deck_name= load_workbook(table_name), table_name[:-5:]
 table=workbook1.active
 print(Fore.BLUE+"p=pronunciation "+Fore.RED+" s=speaking"+Fore.GREEN+" w=writing"+Fore.YELLOW+" v=vocabulary"+Style.RESET_ALL)
@@ -135,7 +137,7 @@ print(translate("Audios...(2/2)"))
 
 if not os.path.exists('tempaudios'):
   os.mkdir('tempaudios')
-  audio_path="//content//tempaudios"
+audio_path="tempaudios"
 
 for j in range(len(phrases)):
   try:
@@ -161,7 +163,7 @@ deck = genanki.Deck(
     deck_name)
 if cardtype in ["v","s"]:
     my_model = genanki.Model(
-        id_deck,
+        678_613_134,
         'CardMaker Q&A',
         fields=fields,
         templates=[
@@ -173,7 +175,7 @@ if cardtype in ["v","s"]:
         ])
 if cardtype=="w":
     my_model = genanki.Model(
-        id_deck,
+        516_000_134,
         'CardMaker Type in the Answer',
         fields=fields,
         templates=[
@@ -185,7 +187,7 @@ if cardtype=="w":
         ])
 if cardtype=="p":
     my_model = genanki.Model(
-        id_deck,
+        130_931_301,
         'CardMaker Pronunciation',
         fields=fields,
         templates=[
@@ -214,6 +216,7 @@ def create_note(text):
   return genanki.Note(model=my_model,fields=text,tags=[str(languages[int(i)]), "cardmaker"])
 
 for i in range(len(phrases)):
+      try:
         if cardtype=="s":
             note =create_note([color + bold(languages[i] ) +translated_phrases[i],insert_sound(deck_name + "phrase" + str(i)) + phrases[i],"" ])
         if cardtype=="v":
@@ -224,21 +227,15 @@ for i in range(len(phrases)):
         if cardtype=="p":
             note = create_note([color + bold(phrases[i]),insert_sound(deck_name + "pronunciation" + str(i))," ", ""])
         deck.add_note(note)
+      except:pass
+media_files=["tempaudios//" + j for j in os.listdir("tempaudios")]
+genanki.Package(deck,media_files=media_files).write_to_file(deck_name +'.apkg')
 
-genanki.Package(deck).write_to_file(deck_name +'.apkg')
-
-readme=open("readme.txt","w")
-readme.write(translate("copy this audios into your collection.media anki folder"+"\n"+"here is an example where you may find it"+"\n"))
-readme.write("C:\\Users\\dutra\\AppData\\Roaming\\Anki2\\Dutra\\collection.media")
-readme.close()
-
-with ZipFile(f"audios_{deck_name}.zip","w") as zip:
-  zip.write("readme.txt")
-  for j in os.listdir("tempaudios/"):
-    zip.write("tempaudios"+"//"+j)
-    os.remove("//content//tempaudios"+"//"+j)
-os.remove("readme.txt")
-os.rmdir('tempaudios')
-
+try:
+   for j in os.listdir("tempaudios"):
+      os.remove("tempaudios//"+j)
+   os.rmdir('tempaudios')
+except:
+   print(translate("Permissão negada para deletar tempaudios"))
 deltat=time.time() -t_o
 print(f"Congratulations, {len(phrases)} flashcards in {round(deltat/60,1)} minutes! {round(60*len(phrases)/deltat,1)} flashcards per minute")

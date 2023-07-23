@@ -1,4 +1,4 @@
-from colorama import Fore,Back,Style,init #use colors
+from rich import print #insert colors and emojis on the terminal
 import genanki #integration with anki
 from googletrans import Translator #translate the phrases
 from openpyxl import load_workbook,Workbook
@@ -7,12 +7,13 @@ import os #get the file directories
 import time #count the amount of time used in creating cards
 
 translator = Translator() #start translator
-init(strip=False) #colors in the terminal
 t_o=time.time() # counting time
-
 def translate(message,source="en"):
   global chosen_language
   return translator.translate(message, src=source,dest=chosen_language).text
+
+print('Welcome to Anki-Cardmaker :earth_americas: !')
+print('The program is on a command line but there is no need to fear :smiley:')
 
 chosen_language=input("Choose the language that your cards and the interface will be translated (ex:pt,fr,en): ").lower()
 while True:
@@ -20,7 +21,7 @@ while True:
     translate("checking if the chosen_language is actually working")
     break
   except: 
-    print("You have typed your language wrongly or unfortunately your language is not supported by the code :(")
+    print("You have typed your language [red] wrongly [/red]or unfortunately your language is not supported by the code :(")
     chosen_language=input("Choose the language that your cards and the interface will be translated (ex:pt,fr,en): ").lower()
 tables_in_the_directory=[j for j in os.listdir() if j[-5::]==".xlsx" and j[0:2]!="~$" and j not in ["checktable.xlsx","verifiedtable.xlsx"]] 
 
@@ -31,17 +32,17 @@ if len(tables_in_the_directory)>1:  #multiple tables to select
     if table_name in tables_in_the_directory: break
     else:
       wrong_name=translate("Wrong name!")
-      print(Fore.RED + wrong_name,Style.RESET_ALL,end="")
+      print('[red]wrong_name[/red]')
 else: 
   try: table_name=tables_in_the_directory[0]
   except: raise ValueError(translate("You haven't import any excel table"))
-  print(translate("Using the table")+" " +Fore.GREEN +table_name+Style.RESET_ALL)
+  print(translate("Using the table")+"[green] "+table_name+"[/green]")
 workbook1 ,deck_name= load_workbook(table_name), table_name[:-5:]
 table=workbook1.active
-print(Fore.BLUE+"p=pronunciation "+Fore.RED+" s=speaking"+Fore.GREEN+" w=writing"+Fore.YELLOW+" v=vocabulary"+Style.RESET_ALL)
+print("[blue]p=pronunciation [/blue] [red]s=speaking [/red] [green] w=writing[/green] [yellow] v=vocabulary [/yellow]")
 cardtype=input(translate("What is the type of your card?")+" ").lower()
 while cardtype not in ["s","p","w","v"]:
-  print(Fore.RED+translate("ERROR, cardtype invalid, type it again")+Style.RESET_ALL)
+  print(translate("[red]ERROR[/red], cardtype invalid, type it again"))
   cardtype=input()
 
 def import_column(table,column):
@@ -79,8 +80,8 @@ if cardtype=='v':
         for j in range(len(phrases)):
             if not wordinphrase(words[j],phrases[j]):
               while True:
-                print(Fore.RED + translate("Error: Word not in the phrase"),end="")
-                print("\n"+Style.RESET_ALL+phrases[j]+"\n"+words[j])
+                print(translate("[red]Error[/red]: Word not in the phrase"))
+                print("\n"+phrases[j]+"\n"+words[j])
                 words[j]=input(translate("Correct word:"))
                 if wordinphrase(words[j],phrases[j]):
                   break
@@ -113,16 +114,16 @@ if cardtype!="p":
       check_table["E"+str(i+2)]=chatgpt_copy_n_past(i)
   workbook2.save("checktable.xlsx")
   workbook2.close()
-  print(translate("Your translations are ready in")+Fore.GREEN+" checktable.xlsx!"+Style.RESET_ALL)
+  print(translate("Your translations are ready in")+"[green] checktable.xlsx! [/green]")
   print(translate("Please assert that everthing is fine and then save as"))
-  print(Fore.GREEN+"verifiedtable.xlsx"+Style.RESET_ALL+translate(",press any key to continue"))
+  print("[green] verifiedtable.xlsx [/green]"+translate(",press any key to continue"))
   time_to_check=input()
   while True:
     try:
       workbook3=load_workbook("verifiedtable.xlsx")
       break
     except: 
-      print(Fore.RED,translate("Error, You forgot to save the" )+" verifiedtable.xlsx",Style.RESET_ALL)
+      print(translate("[red]Error, You forgot to save the" )+" verifiedtable.xlsx [/red]")
       time_to_check=input(translate("press any key to continue"))
   verified_table=workbook3.active  
   phrases= import_column(verified_table,"A")
@@ -196,7 +197,7 @@ if cardtype=="p":
         ])
 #Color of the cards
 
-print(Fore.BLUE + "Blue",Fore.RED + "Red",Fore.YELLOW + "Yellow",Fore.MAGENTA + "Purple",Fore.GREEN + "Green",Fore.LIGHTMAGENTA_EX + "Pink"+Style.RESET_ALL)
+print("[blue]Blue[/blue] [red]Red [/red] [yellow]Yellow[/yellow] [magenta] Purple [/magenta] [green] Green [/green]")
 color=input(translate("Select a color: "))[0:2].lower()
 colors_rgb = {'gr': '<span style="color: rgb(81, 255, 37);">', 're': '<span style="color: rgb(228, 14, 14);">',
                   'bl': '<span style="color: rgb(18, 166, 252);">',
@@ -208,7 +209,7 @@ while True:
     color=colors_rgb[color]
     break
   except:
-    print(translate("Color invalid!"))
+    print(translate("[red]Color invalid! [/red]"))
     color=input(translate("Select a color: "))[0:2].lower()
 
 def insert_sound(file_name): return "[" + "sound:" + file_name + ".mp3" + "]"
@@ -238,7 +239,7 @@ try:
    for j in os.listdir("tempaudios"):os.remove("tempaudios//"+j)
    os.rmdir('tempaudios')
 except:
-   print(translate("Permissão negada para deletar os tempaudios, delete manualmente"))
+   print(translate("[red]Permissão negada para deletar os tempaudios, delete manualmente [/red]"))
 
 deltat=time.time() -t_o
 print(f"Congratulations, {len(phrases)} flashcards in {round(deltat/60,1)} minutes! {round(60*len(phrases)/deltat,1)} flashcards per minute")

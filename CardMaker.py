@@ -5,6 +5,7 @@ from openpyxl import load_workbook,Workbook
 from gtts import gTTS #generate audios
 import os #get the file directories
 import time #count the amount of time used in creating cards
+import tempfile #save and delete the tempaudios
 
 translator = Translator() #start translator
 t_o=time.time() # counting time
@@ -123,7 +124,7 @@ if cardtype!="p":
       workbook3=load_workbook("verifiedtable.xlsx")
       break
     except: 
-      print(translate("[red]Error, You forgot to save the" )+" verifiedtable.xlsx [/red]")
+      print(translate("[red]Error, You forgot to save the verifiedtable.xlsx [/red]"))
       time_to_check=input(translate("press any key to continue"))
   verified_table=workbook3.active  
   phrases= import_column(verified_table,"A")
@@ -133,113 +134,105 @@ if cardtype!="p":
     translated_words=import_column(verified_table,"D")
   workbook3.close()
 print(translate("Audios...(2/2)"))
-
-if not os.path.exists('tempaudios'):
-  os.mkdir('tempaudios')
-audio_path="tempaudios"
-
-for j in range(len(phrases)):
-    try:
-      if cardtype=="v":
-        audio = gTTS(words[j]+"."+phrases[j], lang=languages[j])
-        audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
-        audio= gTTS(words[j], lang=languages[j])
-        audio.save(audio_path + "//" + deck_name + "word" + str(j) + '.mp3')
-      if cardtype in ["s","w"]:
-        audio = gTTS(phrases[j], lang=languages[j])
-        audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
-      if cardtype=="p":
-        audio = gTTS(phrases[j], lang=languages[j])
-        audio.save(audio_path + "//" + deck_name + "pronunciation" + str(j) + '.mp3')
-    except:pass
-
-from random import randint
-id_deck =randint(1e9, 1e10)
-fields=[{'name': 'Question'},{'name': 'Answer'},{'name': 'MyMedia'}]
-
-deck = genanki.Deck(id_deck,deck_name)
-
-if cardtype in ["v","s"]:
-    my_model = genanki.Model(
-        678_613_134,
-        'CardMaker Q&A',
-        fields=fields,
-        templates=[
-            {
-                'name': 'Card Q&A',
-                'qfmt': '{{Question}}<br>{{MyMedia}}',
-                'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
-            },
-        ])
-if cardtype=="w":
-    my_model = genanki.Model(
-        516_000_134,
-        'CardMaker Type in the Answer',
-        fields=fields,
-        templates=[
-            {
-                'name': 'Card 1',
-                'qfmt': '{{Question}}<br> {{type:Answer}}',
-                'afmt': '{{FrontSide}}{{MyMedia}}',
-            },
-        ])
-if cardtype=="p":
-    my_model = genanki.Model(
-        130_931_301,
-        'CardMaker Pronunciation',
-        fields=fields,
-        templates=[
-            {
-                'name': 'Card 1',
-                'qfmt': '{{Question}}<br>{{MyMedia}}',
-                'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
-            },
-        ])
-#Color of the cards
-
-print("[blue]Blue[/blue] [red]Red [/red] [yellow]Yellow[/yellow] [magenta] Purple [/magenta] [green] Green [/green]")
-color=input(translate("Select a color: "))[0:2].lower()
-colors_rgb = {'gr': '<span style="color: rgb(81, 255, 37);">', 're': '<span style="color: rgb(228, 14, 14);">',
-                  'bl': '<span style="color: rgb(18, 166, 252);">',
-                  'ye': '<span style="color: rgb(249, 255, 54);">',
-                  'pu': '<span style="color: rgb(198, 38, 255);">',
-                  'pi': '<span style="color: rgb(255, 14, 192);">', }
-while True:
-  try:
-    color=colors_rgb[color]
-    break
-  except:
-    print(translate("[red]Color invalid! [/red]"))
-    color=input(translate("Select a color: "))[0:2].lower()
-
-def insert_sound(file_name): return "[" + "sound:" + file_name + ".mp3" + "]"
-def bold(text): return '<u><b><i>' + text +'</i></b></u></span> '
-def create_note(text):
-  global i,my_model,languages
-  return genanki.Note(model=my_model,fields=text,tags=[str(languages[int(i)]), "cardmaker"])
-
-for i in range(len(phrases)):
+#create a temp directory inside the project's folder
+with tempfile.TemporaryDirectory(dir=os.getcwd(),prefix=".tempaudio") as audio_path:
+  for j in range(len(phrases)):
       try:
-        if cardtype=="s":
-            note =create_note([color + bold(languages[i] ) +translated_phrases[i],insert_sound(deck_name + "phrase" + str(i)) + phrases[i],""])
         if cardtype=="v":
-            note =create_note(["",insert_sound(deck_name + "word" + str(i)) + color + bold(words[i])+  " == " + translated_words[i],
-                               insert_sound(deck_name + "phrase" + str(i))  + color+ bold(words[i]) + ". " +phrases[i]])
-        if cardtype=="w":
-            note = create_note([color + bold(languages[i])+translated_phrases[i], phrases[i],insert_sound(deck_name+"phrase"+str(i))])
+          audio = gTTS(words[j]+"."+phrases[j], lang=languages[j])
+          audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
+          audio= gTTS(words[j], lang=languages[j])
+          audio.save(audio_path + "//" + deck_name + "word" + str(j) + '.mp3')
+        if cardtype in ["s","w"]:
+          audio = gTTS(phrases[j], lang=languages[j])
+          audio.save(audio_path + "//" + deck_name + "phrase" + str(j) + '.mp3')
         if cardtype=="p":
-            note = create_note([color + bold(phrases[i]),insert_sound(deck_name + "pronunciation" + str(i))," ", ""])
-        deck.add_note(note)
+          audio = gTTS(phrases[j], lang=languages[j])
+          audio.save(audio_path + "//" + deck_name + "pronunciation" + str(j) + '.mp3')
       except:pass
 
+  from random import randint
+  id_deck =randint(1e9, 1e10)
+  fields=[{'name': 'Question'},{'name': 'Answer'},{'name': 'MyMedia'}]
 
-media_files=["tempaudios//"+j for j in os.listdir("tempaudios")]
-genanki.Package(deck,media_files=media_files).write_to_file(deck_name +'.apkg')
-try:
-   for j in os.listdir("tempaudios"):os.remove("tempaudios//"+j)
-   os.rmdir('tempaudios')
-except:
-   print(translate("[red]Permissão negada para deletar os tempaudios, delete manualmente [/red]"))
+  deck = genanki.Deck(id_deck,deck_name)
 
-deltat=time.time() -t_o
-print(f"Congratulations, {len(phrases)} flashcards in {round(deltat/60,1)} minutes! {round(60*len(phrases)/deltat,1)} flashcards per minute")
+  if cardtype in ["v","s"]:
+      my_model = genanki.Model(
+          678_613_134,
+          'CardMaker Q&A',
+          fields=fields,
+          templates=[
+              {
+                  'name': 'Card Q&A',
+                  'qfmt': '{{Question}}<br>{{MyMedia}}',
+                  'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
+              },
+          ])
+  if cardtype=="w":
+      my_model = genanki.Model(
+          516_000_134,
+          'CardMaker Type in the Answer',
+          fields=fields,
+          templates=[
+              {
+                  'name': 'Card 1',
+                  'qfmt': '{{Question}}<br> {{type:Answer}}',
+                  'afmt': '{{FrontSide}}{{MyMedia}}',
+              },
+          ])
+  if cardtype=="p":
+      my_model = genanki.Model(
+          130_931_301,
+          'CardMaker Pronunciation',
+          fields=fields,
+          templates=[
+              {
+                  'name': 'Card 1',
+                  'qfmt': '{{Question}}<br>{{MyMedia}}',
+                  'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
+              },
+          ])
+  #Color of the cards
+
+  print("[blue]Blue[/blue] [red]Red [/red] [yellow]Yellow[/yellow] [magenta] Purple [/magenta] [green] Green [/green]")
+  color=input(translate("Select a color: "))[0:2].lower()
+  colors_rgb = {'gr': '<span style="color: rgb(81, 255, 37);">', 're': '<span style="color: rgb(228, 14, 14);">',
+                    'bl': '<span style="color: rgb(18, 166, 252);">',
+                    'ye': '<span style="color: rgb(249, 255, 54);">',
+                    'pu': '<span style="color: rgb(198, 38, 255);">',
+                    'pi': '<span style="color: rgb(255, 14, 192);">', }
+  while True:
+    try:
+      color=colors_rgb[color]
+      break
+    except:
+      print(translate("[red]Color invalid! [/red]"))
+      color=input(translate("Select a color: "))[0:2].lower()
+
+  def insert_sound(file_name): return "[" + "sound:" + file_name + ".mp3" + "]"
+  def bold(text): return '<u><b><i>' + text +'</i></b></u></span> '
+  def create_note(text):
+    global i,my_model,languages
+    return genanki.Note(model=my_model,fields=text,tags=[str(languages[int(i)]), "cardmaker"])
+
+  for i in range(len(phrases)):
+        try:
+          if cardtype=="s":
+              note =create_note([color + bold(languages[i] ) +translated_phrases[i],insert_sound(deck_name + "phrase" + str(i)) + phrases[i],""])
+          if cardtype=="v":
+              note =create_note(["",insert_sound(deck_name + "word" + str(i)) + color + bold(words[i])+  " == " + translated_words[i],
+                                insert_sound(deck_name + "phrase" + str(i))  + color+ bold(words[i]) + ". " +phrases[i]])
+          if cardtype=="w":
+              note = create_note([color + bold(languages[i])+translated_phrases[i], phrases[i],insert_sound(deck_name+"phrase"+str(i))])
+          if cardtype=="p":
+              note = create_note([color + bold(phrases[i]),insert_sound(deck_name + "pronunciation" + str(i))," ", ""])
+          deck.add_note(note)
+        except:pass
+
+
+  media_files=[audio_path+"//"+j for j in os.listdir(audio_path)]
+  genanki.Package(deck,media_files=media_files).write_to_file(deck_name +'.apkg')
+
+  deltat=time.time() -t_o
+  print(f"Congratulations, {len(phrases)} flashcards in {round(deltat/60,1)} minutes! {round(60*len(phrases)/deltat,1)} flashcards per minute")
